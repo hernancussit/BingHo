@@ -2,6 +2,8 @@
 
 Aplicación para la gestión, control y proyección en vivo de tableros de Bingo (números del 1 al 90), diseñada especialmente para eventos presenciales, pantallas LED de gran formato y transmisiones en directo.
 
+![BingHo - Tablero de Bingo 1 al 90](preview.png)
+
 ---
 
 ## 🌟 Funciones y Características
