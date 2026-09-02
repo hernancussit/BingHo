@@ -1,46 +1,34 @@
-# 🎱 BingHo (Tablero 1 al 90)
+# 🎱 BingHo (Tablero de Bingo 1 al 90)
 
-Aplicación de escritorio profesional desarrollada con **Electron**, **HTML5**, **CSS3 (Grid/Flexbox/Variables)** y **JavaScript Vanilla**, especialmente diseñada para proyectar tableros de Bingo en **pantallas LED de gran formato** y auditorías de cartón en tiempo real.
-
----
-
-## 🌟 Características de BingHo
-
-- **Nombre e Identidad de Marca**: Proyecto renombrado a **BingHo** con icono personalizado de bola de bingo 3D dorada y cian neón (`icon.ico` e `icon.png`).
-- **Tablero Maximizado con Números Extra Grandes (96vh)**: Celdas con tipografía masiva (`clamp(20px, 4.8vmin, 58px)`) que llenan casi la totalidad del botón, optimizadas para lectura a larga distancia en escenarios y transmisiones.
-- **Historial de Salidos Vertical Gigante**: La sección `ÚLTIMOS SALIDOS` en la columna izquierda muestra los números cantados en tarjetas de ancho completo apiladas verticalmente (`clamp(24px, 3.4vmin, 40px)`).
-- **Columna de Información LED (Izquierda)**:
-  - Título y número del sorteo ("SORTEO N° 001") con badge `● EN VIVO` (controlado y editable desde el panel lateral).
-  - Tarjeta gigante del **Último Número Cantado**.
-  - Contador en vivo (`CANTADOS: XX / 90`) e historial de salidos.
-- **Panel de Control Compacto (Derecha)**:
-  - Input para ingresar el **N° de Sorteo**.
-  - Ingreso numérico con auto-focus permanente y teclado numérico.
-  - Botón gigante toggle **"BINGO!"**.
-  - Fila integrada `[ N° ] [ ✕ Quitar ]` para corrección de errores sin modales emergentes.
-  - Selector rápido de 3 temas y pantalla completa (`F11`).
-- **Modo Auditoría BINGO**:
-  - El tablero mantiene su **brillo y visibilidad al 100%**.
-  - Los aciertos (**verde neón con zoom 1.36x**) y los números no cantados (**rojo alerta con zoom 1.36x**) se mantienen resaltados sobre el tablero hasta que se sale del modo auditoría.
-- **Tablero Protegido**: Las celdas del tablero central no responden a clics accidentales.
-- **Persistencia Anti-Crash**: Sincronización continua en `localStorage`. Al reabrir el programa, el sorteo continúa exactamente donde quedó.
-- **Ejecutable Único Portable (`BingHo.exe`)**:
-  - Compilación directa a un solo archivo `.exe` con icono de Windows integrado listo para ejecutar sin instalación.
+Aplicación para la gestión, control y proyección en vivo de tableros de Bingo (números del 1 al 90), diseñada especialmente para eventos presenciales, pantallas LED de gran formato y transmisiones en directo.
 
 ---
 
-## 🚀 Comandos de Desarrollo y Compilación
+## 🌟 Funciones y Características
 
-### Ejecutar en modo desarrollo
-```bash
-npm start
-```
-
-### Compilar a un SOLO archivo Portable (.EXE) con Icono
-```bash
-npm run build:single
-```
-Genera `dist/BingHo.exe` (115 MB) con icono embebido listo para proyectar.
+- **Tablero de Alta Visibilidad**: Grilla completa del 1 al 90 maximizada en pantalla para una lectura nítida a larga distancia.
+- **Ajuste de Escala de Fuente (60% - 130%)**: Control deslizante para calibrar en tiempo real el tamaño de los números y adaptarlo a cualquier resolución o relación de aspecto de pantalla.
+- **Modo Auditoría BINGO en Vivo**:
+  - Validación visual inmediata de cartones ganadores.
+  - Los números correctos se destacan en **verde con zoom**.
+  - Los números no cantados alertan en **rojo**.
+  - Los números auditados permanecen resaltados hasta finalizar la revisión.
+- **Información del Sorteo en Vivo**:
+  - Panel con el último número cantado en tamaño gigante.
+  - Historial vertical de los últimos números salidos en orden cronológico.
+  - Contador de números cantados en tiempo real (`X / 90`).
+  - Campo editable para el nombre o número de sorteo.
+- **Corrección de Errores Rápida**:
+  - Opción para quitar un número específico ingresado por error sin interrumpir la visualización.
+  - Botón de deshacer el último número cantado.
+- **Temas Visuales**:
+  - **Clásico**: Azul marino y amarillo de alto impacto.
+  - **Alto Contraste**: Fondo negro absoluto con cian y blanco.
+  - **Luz de Día**: Fondo claro para proyecciones en ambientes iluminados.
+- **Protección del Tablero**: Las celdas del tablero central están bloqueadas a clics directos para evitar modificaciones accidentales.
+- **Persistencia Automática (Anti-Cierre)**: El estado del sorteo y los números cantados se guardan continuamente; si la aplicación se cierra por accidente, se reanuda exactamente donde quedó.
+- **Efectos de Sonido**: Tonos sintetizados para el sorteo y la auditoría (con opción de silencio).
+- **Modo Pantalla Completa**: Alternancia fluida con la tecla `F11`.
 
 ---
 
@@ -48,13 +36,22 @@ Genera `dist/BingHo.exe` (115 MB) con icono embebido listo para proyectar.
 
 | Tecla | Acción |
 | :--- | :--- |
-| `[Enter]` | Cantar número en Sorteo o Auditar en Modo Bingo |
+| `[Enter]` | Cantar número (en Sorteo) o Validar número (en Auditoría) |
 | `[F11]` | Alternar Pantalla Completa |
-| `[Ctrl + B]` | Alternar Modo Auditoría BINGO! |
-| `[Esc]` | Cerrar modales |
+| `[Ctrl + B]` | Entrar / Salir del Modo Auditoría BINGO |
+| `[Esc]` | Cerrar cuadros de confirmación |
 
 ---
 
-## 📄 Licencia
+## 💻 Requisitos del Sistema
 
-MIT - BingHo para Proyección en Pantallas LED y Eventos en Vivo.
+- **Sistema Operativo**: Windows 10 o Windows 11 (64 bits).
+- **Instalación**: No requiere instalación ni privilegios de administrador.
+
+---
+
+## 🚀 Instrucciones de Uso
+
+1. **Descargar**: Descarga la última versión del archivo `BingHo.exe` desde la sección de **[Releases](https://github.com/hernancussit/BingHo/releases)**.
+2. **Ejecutar**: Haz doble clic sobre `BingHo.exe` para iniciar la aplicación de forma inmediata.
+3. **Proyectar**: Presiona `F11` para activar el modo pantalla completa en tu monitor, proyector o pantalla LED.
