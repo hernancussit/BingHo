@@ -1,0 +1,55 @@
+{
+  "name": "bingho",
+  "version": "0.9.0-beta",
+  "description": "BingHo - Sistema Profesional de Tablero de Bingo (1-90) para Pantallas LED y Proyección",
+  "main": "main.js",
+  "author": "BingHo Team",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "package:win": "electron-packager . \"BingHo\" --platform=win32 --arch=x64 --icon=icon.ico --out=dist --overwrite --prune=true",
+    "build:single": "powershell -ExecutionPolicy Bypass -File ./build-single-exe.ps1",
+    "build:win": "electron-builder --win",
+    "build:portable": "electron-builder --win portable",
+    "build:all": "electron-builder -w",
+    "pack": "electron-builder --dir"
+  },
+  "devDependencies": {
+    "@electron/packager": "^18.3.8",
+    "electron": "^28.3.3",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.bingho.tablero",
+    "productName": "BingHo",
+    "copyright": "Copyright © 2026",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "icon": "icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "BingHo"
+    }
+  }
+}

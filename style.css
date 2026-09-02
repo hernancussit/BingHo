@@ -1,0 +1,999 @@
+/* ==========================================================================
+   BingHo - ESTILOS, TEMAS Y LAYOUT MAXIMIZADO PARA PANTALLAS LED
+   ========================================================================== */
+
+/* 1. DEFINICIÓN DE VARIABLES POR TEMA Y ESCALA DINÁMICA DE FUENTE */
+
+:root {
+  --font-scale: 1.0; /* Escala ajustable de 0.60 a 1.30 mediante slider */
+}
+
+/* TEMA 1: CLÁSICO (Azul Marino + Amarillo Brillante) */
+:root,
+[data-theme="clasico"],
+.theme-clasico {
+  --bg-main: #060b18;
+  --bg-board-area: #0b132b;
+  --bg-left-bar: #0d1b2a;
+  --bg-panel: #09111e;
+  --bg-card: #1c2541;
+  --border-color: rgba(255, 255, 255, 0.12);
+  --border-glow: rgba(0, 210, 255, 0.4);
+  
+  --cell-bg: #152238;
+  --cell-color: #7b93b2;
+  --cell-border: rgba(255, 255, 255, 0.08);
+  
+  --cell-active-bg: #ffcc00;
+  --cell-active-color: #060b18;
+  --cell-active-glow: 0 0 16px rgba(255, 204, 0, 0.9);
+  --cell-last-bg: #ff9900;
+  --cell-last-glow: 0 0 25px rgba(255, 153, 0, 1);
+
+  --accent-color: #00d2ff;
+  --accent-hover: #3a86ff;
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
+  --text-muted: #53647c;
+
+  --audit-valid: #00ff66;
+  --audit-valid-glow: 0 0 35px rgba(0, 255, 102, 1);
+  --audit-invalid: #ff0033;
+  --audit-invalid-glow: 0 0 35px rgba(255, 0, 51, 1);
+
+  --bingo-btn-active: #e63946;
+}
+
+/* TEMA 2: ALTO CONTRASTE (Negro Absoluto + Cyan Eléctrico / Blanco) - SIN CONFLICTO CON VERDE DE AUDITORÍA */
+[data-theme="alto-contraste"],
+.theme-alto-contraste {
+  --bg-main: #000000;
+  --bg-board-area: #000000;
+  --bg-left-bar: #080808;
+  --bg-panel: #0a0a0a;
+  --bg-card: #141414;
+  --border-color: #2e2e2e;
+  --border-glow: rgba(0, 240, 255, 0.4);
+  
+  --cell-bg: #141414;
+  --cell-color: #777777;
+  --cell-border: #242424;
+  
+  --cell-active-bg: #00f0ff; /* Cyan Eléctrico para números cantados */
+  --cell-active-color: #000000;
+  --cell-active-glow: 0 0 18px rgba(0, 240, 255, 0.95);
+  --cell-last-bg: #ffffff; /* Blanco Puro para último número */
+  --cell-last-glow: 0 0 28px rgba(255, 255, 255, 1);
+
+  --accent-color: #00f0ff;
+  --accent-hover: #00c8d6;
+  --text-primary: #ffffff;
+  --text-secondary: #aaaaaa;
+  --text-muted: #555555;
+
+  --audit-valid: #00ff66; /* Verde Neón Exclusivo para Cartón Válido */
+  --audit-valid-glow: 0 0 40px rgba(0, 255, 102, 1);
+  --audit-invalid: #ff0044; /* Rojo Neón Exclusivo para Número No Cantado */
+  --audit-invalid-glow: 0 0 40px rgba(255, 0, 68, 1);
+
+  --bingo-btn-active: #ff0044;
+}
+
+/* TEMA 3: LUZ DE DÍA (Gris Claro + Rojo Intenso) */
+[data-theme="luz-dia"],
+.theme-luz-dia {
+  --bg-main: #dfe5ec;
+  --bg-board-area: #edf2f7;
+  --bg-left-bar: #f8fafc;
+  --bg-panel: #ffffff;
+  --bg-card: #ffffff;
+  --border-color: rgba(0, 0, 0, 0.12);
+  --border-glow: rgba(220, 38, 38, 0.3);
+  
+  --cell-bg: #cbd5e1;
+  --cell-color: #334155;
+  --cell-border: rgba(0, 0, 0, 0.12);
+  
+  --cell-active-bg: #d90429;
+  --cell-active-color: #ffffff;
+  --cell-active-glow: 0 0 14px rgba(217, 4, 41, 0.7);
+  --cell-last-bg: #ef233c;
+  --cell-last-glow: 0 0 20px rgba(239, 35, 60, 0.85);
+
+  --accent-color: #d90429;
+  --accent-hover: #b91c1c;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #8492a6;
+
+  --audit-valid: #059669;
+  --audit-valid-glow: 0 0 30px rgba(5, 150, 105, 0.9);
+  --audit-invalid: #dc2626;
+  --audit-invalid-glow: 0 0 30px rgba(220, 38, 38, 0.9);
+
+  --bingo-btn-active: #b91c1c;
+}
+
+/* ==========================================================================
+   2. REINICIO Y LAYOUT GLOBAL (100vw / 100vh)
+   ========================================================================== */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body {
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  line-height: 1.15;
+}
+
+.app-container {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   3. COLUMNA IZQUIERDA: INFORMACIÓN Y ESTADÍSTICAS DEL SORTEO
+   ========================================================================== */
+
+.left-info-bar {
+  flex: 0 0 19%;
+  width: 19%;
+  min-width: 200px;
+  max-width: 270px;
+  height: 100vh;
+  background-color: var(--bg-left-bar);
+  border-right: 2px solid var(--border-color);
+  padding: 1.2vh 1vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1vh;
+  z-index: 5;
+  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.3);
+}
+
+.info-section {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 1vh 0.8vw;
+}
+
+/* Sorteo Header Box */
+.draw-header-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.badge-live {
+  font-size: clamp(9px, 1.1vmin, 12px);
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  color: #ff3344;
+  animation: liveBlink 1.8s infinite ease-in-out;
+}
+
+@keyframes liveBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.draw-title-display {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: clamp(16px, 2.3vmin, 26px);
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stat-counter-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--border-color);
+  padding-top: 6px;
+  margin-top: 4px;
+}
+
+.stat-counter-label {
+  font-size: clamp(9px, 1vmin, 11px);
+  font-weight: 800;
+  color: var(--text-secondary);
+  letter-spacing: 1px;
+}
+
+.stat-counter-value {
+  font-family: 'Chakra Petch', monospace;
+  font-size: clamp(15px, 2vmin, 22px);
+  font-weight: 800;
+  color: var(--accent-color);
+}
+
+/* Tarjeta del Último Número Cantado */
+.last-number-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1.5vh 0.8vw;
+  background: linear-gradient(180deg, var(--bg-card), rgba(0, 0, 0, 0.2));
+  border: 2px solid var(--border-color);
+}
+
+.last-number-label {
+  font-size: clamp(9px, 1.1vmin, 12px);
+  font-weight: 900;
+  color: var(--text-secondary);
+  letter-spacing: 1.5px;
+}
+
+.last-number-display {
+  font-family: 'Chakra Petch', 'Outfit', sans-serif;
+  font-size: clamp(44px, 7.8vmin, 88px);
+  font-weight: 900;
+  color: var(--cell-active-bg);
+  text-shadow: var(--cell-active-glow);
+  line-height: 1;
+  margin: 4px 0;
+}
+
+.last-number-display.number-pop {
+  animation: numPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes numPop {
+  0% { transform: scale(0.75); }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+/* Indicador de Auditoría BINGO en la barra izquierda */
+.audit-status-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #e63946;
+  color: #ffffff;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: clamp(10px, 1.3vmin, 14px);
+  font-weight: 900;
+  letter-spacing: 1.2px;
+  box-shadow: 0 0 16px rgba(230, 57, 70, 0.8);
+  animation: auditBadgePulse 1s infinite alternate ease-in-out;
+}
+
+@keyframes auditBadgePulse {
+  0% { transform: scale(0.98); }
+  100% { transform: scale(1.02); }
+}
+
+.audit-pulse-dot {
+  width: 8px;
+  height: 8px;
+  background: #ffffff;
+  border-radius: 50%;
+  animation: liveBlink 0.8s infinite;
+}
+
+/* HISTORIAL DE NÚMEROS: BOTONES GRANDES VERTICALES UNO ARRIBA DEL OTRO */
+.history-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 140px;
+}
+
+.history-section-title {
+  font-size: clamp(11px, 1.3vmin, 14px);
+  font-weight: 900;
+  color: var(--text-secondary);
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  text-align: center;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 4px;
+}
+
+.history-list-full {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding: 2px 4px 2px 2px;
+}
+
+.history-list-full::-webkit-scrollbar {
+  width: 5px;
+}
+.history-list-full::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.history-empty {
+  font-size: clamp(11px, 1.2vmin, 13px);
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: 15px 0;
+}
+
+/* Botón/Fila grande de número en el historial */
+.chip-number-full {
+  width: 100%;
+  height: clamp(40px, 5.2vh, 56px);
+  background: var(--bg-main);
+  border: 2px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 8px;
+  font-family: 'Chakra Petch', monospace;
+  font-weight: 900;
+  font-size: calc(clamp(20px, 3.2vmin, 36px) * var(--font-scale, 1));
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  animation: chipSlide 0.25s ease;
+}
+
+.chip-number-full.chip-latest {
+  background: var(--cell-active-bg);
+  color: var(--cell-active-color);
+  border-color: #ffffff;
+  font-weight: 900;
+  box-shadow: var(--cell-active-glow);
+}
+
+@keyframes chipSlide {
+  from { transform: translateY(-8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Toast de Auditoría en Vivo */
+.audit-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  animation: toastPop 0.3s ease;
+}
+
+@keyframes toastPop {
+  0% { transform: translateY(10px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.audit-toast.valid {
+  border-color: var(--audit-valid);
+  background: rgba(0, 255, 102, 0.15);
+}
+
+.audit-toast.invalid {
+  border-color: var(--audit-invalid);
+  background: rgba(255, 0, 51, 0.15);
+}
+
+.audit-toast-icon {
+  font-size: 24px;
+}
+
+.audit-toast-title {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: clamp(11px, 1.4vmin, 15px);
+  font-weight: 900;
+  color: var(--text-primary);
+}
+
+.audit-toast-desc {
+  font-size: clamp(9px, 1vmin, 11px);
+  color: var(--text-secondary);
+}
+
+/* ==========================================================================
+   4. ZONA CENTRAL: TABLERO MAXIMIZADO (TIPOGRAFÍA NÍTIDA Y ESCALABLE)
+   ========================================================================== */
+
+.main-board-area {
+  flex: 1;
+  height: 100vh;
+  background-color: var(--bg-board-area);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.2vh 1vw;
+  position: relative;
+  overflow: hidden;
+}
+
+.board-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Grilla de 10 columnas × 9 filas con tamaño maximizado (96vh) */
+.bingo-board {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: repeat(9, 1fr);
+  gap: clamp(3px, 0.65vmin, 9px);
+  width: 100%;
+  height: 96vh;
+  max-width: calc(96vh * (10 / 9));
+  aspect-ratio: 10 / 9;
+  margin: auto;
+}
+
+/* Celda Normal (Escalado nítido de 60% a 130% sin distorsión) */
+.bingo-cell {
+  aspect-ratio: 1 / 1;
+  background-color: var(--cell-bg);
+  color: var(--cell-color);
+  border: 1px solid var(--cell-border);
+  border-radius: clamp(4px, 0.8vmin, 10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Chakra Petch', 'Outfit', sans-serif;
+  font-size: calc(clamp(16px, 4.4vmin, 52px) * var(--font-scale, 1));
+  font-weight: 800;
+  line-height: 1;
+  position: relative;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Celda en estado ACTIVO (Firme, sin saltos) */
+.bingo-cell.active {
+  background-color: var(--cell-active-bg);
+  color: var(--cell-active-color);
+  font-weight: 900;
+  border-color: transparent;
+  box-shadow: var(--cell-active-glow);
+  z-index: 2;
+}
+
+/* Animación de entrada ÚNICA y EXCLUSIVA para el nuevo número cantado */
+.bingo-cell.just-entered {
+  animation: cellPop 0.32s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes cellPop {
+  0% { transform: scale(0.5); opacity: 0; }
+  75% { transform: scale(1.16); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Celda del ÚLTIMO NÚMERO cantado: Borde nítido y resplandor estable */
+.bingo-cell.last-active {
+  background-color: var(--cell-last-bg);
+  color: var(--cell-active-color);
+  box-shadow: var(--cell-last-glow);
+  border: 2px solid #ffffff;
+  z-index: 3;
+}
+
+/* ==========================================================================
+   5. MODO AUDITORÍA BINGO (PERSISTENTE HASTA SALIR DEL MODO)
+   ========================================================================== */
+
+/* Celda Auditada VÁLIDA (Verde neón brillante con zoom 1.36x persistente) */
+.bingo-cell.cell-audit-valid {
+  background-color: var(--audit-valid) !important;
+  color: #000000 !important;
+  font-weight: 900 !important;
+  transform: scale(1.36) !important;
+  z-index: 1000 !important;
+  box-shadow: var(--audit-valid-glow), 0 0 70px rgba(0, 255, 102, 0.8) !important;
+  border: 3px solid #ffffff !important;
+  animation: auditValidPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes auditValidPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.5); }
+  100% { transform: scale(1.36); }
+}
+
+/* Celda Auditada INVÁLIDA (Rojo intenso con zoom 1.36x persistente) */
+.bingo-cell.cell-audit-invalid {
+  background-color: var(--audit-invalid) !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  transform: scale(1.36) !important;
+  z-index: 1000 !important;
+  box-shadow: var(--audit-invalid-glow), 0 0 70px rgba(255, 0, 51, 0.8) !important;
+  border: 3px solid #ffffff !important;
+  animation: auditInvalidShake 0.6s ease-in-out;
+}
+
+@keyframes auditInvalidShake {
+  0%, 100% { transform: scale(1.36) rotate(0deg); }
+  20%, 60% { transform: scale(1.36) rotate(-7deg); }
+  40%, 80% { transform: scale(1.36) rotate(7deg); }
+}
+
+/* ==========================================================================
+   6. PANEL DE CONTROL DERECHO (BingHo)
+   ========================================================================== */
+
+.control-panel {
+  flex: 0 0 13%;
+  width: 13%;
+  min-width: 160px;
+  max-width: 210px;
+  height: 100vh;
+  background-color: var(--bg-panel);
+  border-left: 2px solid var(--border-color);
+  padding: 1.2vh 0.8vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.8vh;
+  z-index: 5;
+  box-shadow: -4px 0 15px rgba(0, 0, 0, 0.35);
+  overflow-y: auto;
+}
+
+.panel-top-title {
+  text-align: center;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 4px;
+}
+
+.panel-title {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: clamp(16px, 2vmin, 22px);
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  color: var(--accent-color);
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.control-label {
+  font-size: clamp(9px, 1vmin, 11px);
+  font-weight: 800;
+  color: var(--text-secondary);
+  letter-spacing: 1px;
+}
+
+/* Slider de Escala de Fuente */
+.slider-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.slider-badge {
+  font-family: 'Chakra Petch', monospace;
+  font-size: clamp(9px, 1.1vmin, 12px);
+  font-weight: 800;
+  color: var(--accent-color);
+  background: var(--bg-card);
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.font-size-slider {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-main);
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+  accent-color: var(--accent-color);
+  margin: 3px 0;
+}
+
+/* Input de Número de Sorteo */
+.sidebar-draw-input {
+  width: 100%;
+  padding: 6px 8px;
+  background-color: var(--bg-main);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: clamp(11px, 1.3vmin, 14px);
+  font-weight: 700;
+  text-transform: uppercase;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.sidebar-draw-input:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 8px var(--border-glow);
+}
+
+/* Fila de Ingreso Numérico */
+.input-row {
+  display: flex;
+  gap: 4px;
+}
+
+.number-input {
+  flex: 1;
+  height: clamp(38px, 4.8vh, 52px);
+  background-color: var(--bg-main);
+  border: 2px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Chakra Petch', monospace;
+  font-size: clamp(20px, 2.8vmin, 32px);
+  font-weight: 900;
+  text-align: center;
+  outline: none;
+  transition: all 0.2s;
+  -moz-appearance: textfield;
+}
+
+.number-input::-webkit-outer-spin-button,
+.number-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.number-input:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 10px var(--border-glow);
+}
+
+.btn-submit {
+  flex: 0 0 38px;
+  background-color: var(--accent-color);
+  color: #000000;
+  border: none;
+  border-radius: 6px;
+  font-size: 18px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.btn-submit:hover {
+  background-color: var(--accent-hover);
+}
+
+.input-hint {
+  font-size: clamp(8px, 0.9vmin, 10px);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* BOTÓN GIGANTE TOGGLE BINGO! */
+.btn-bingo {
+  width: 100%;
+  padding: 1.2vh 0.4vw;
+  background: linear-gradient(135deg, #222222, #141414);
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  transition: all 0.25s ease;
+  outline: none;
+}
+
+.btn-bingo:hover {
+  border-color: #ff3344;
+  transform: scale(1.02);
+}
+
+.bingo-btn-text {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: clamp(20px, 3.2vmin, 36px);
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.bingo-btn-status {
+  font-size: clamp(8px, 0.9vmin, 10px);
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+}
+
+.btn-bingo.active {
+  background: linear-gradient(135deg, #e63946, #b91c1c);
+  border-color: #ffd166;
+  box-shadow: 0 0 22px rgba(230, 57, 70, 0.9);
+  animation: bingoBeat 1.2s infinite alternate ease-in-out;
+}
+
+.btn-bingo.active .bingo-btn-status {
+  color: #ffd166;
+}
+
+@keyframes bingoBeat {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.04); }
+}
+
+/* Corrección de Errores Integrada (Fila Inline) */
+.remove-inline-row {
+  display: flex;
+  gap: 4px;
+}
+
+.remove-inline-input {
+  width: 50px;
+  height: 34px;
+  background-color: var(--bg-main);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: #ff4d4f;
+  font-family: 'Chakra Petch', monospace;
+  font-size: 16px;
+  font-weight: 900;
+  text-align: center;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.remove-inline-input::-webkit-outer-spin-button,
+.remove-inline-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.remove-inline-input:focus {
+  border-color: #ff4d4f;
+  box-shadow: 0 0 8px rgba(255, 77, 79, 0.6);
+}
+
+.btn-remove-inline {
+  flex: 1;
+  height: 34px;
+  background-color: rgba(255, 77, 79, 0.15);
+  border: 1px solid rgba(255, 77, 79, 0.4);
+  border-radius: 6px;
+  color: #ff4d4f;
+  font-size: clamp(9px, 1.1vmin, 12px);
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-remove-inline:hover {
+  background-color: #ff4d4f;
+  color: #ffffff;
+}
+
+.btn-tool {
+  width: 100%;
+  padding: 6px 8px;
+  background-color: var(--bg-main);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: clamp(9px, 1.1vmin, 12px);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.btn-tool:hover {
+  background-color: var(--bg-card);
+  border-color: var(--accent-color);
+}
+
+/* Selector de Temas Compacto */
+.theme-buttons-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.btn-theme-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 8px;
+  background-color: var(--bg-main);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: clamp(9px, 1.1vmin, 12px);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-theme-chip:hover {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.btn-theme-chip.active {
+  border-color: var(--accent-color);
+  color: var(--text-primary);
+  background-color: var(--bg-card);
+  box-shadow: inset 3px 0 0 var(--accent-color);
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.clasico-dot { background: linear-gradient(135deg, #0b132b 50%, #ffcc00 50%); border: 1px solid #ffffff44; }
+.alto-contraste-dot { background: linear-gradient(135deg, #000000 50%, #00f0ff 50%); border: 1px solid #ffffff44; }
+.luz-dia-dot { background: linear-gradient(135deg, #cbd5e1 50%, #d90429 50%); border: 1px solid #00000044; }
+
+/* Acciones del Sistema */
+.panel-actions-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.btn-system {
+  width: 100%;
+  padding: 6px 8px;
+  background-color: var(--bg-main);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: clamp(9px, 1.1vmin, 12px);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.btn-system:hover {
+  background-color: var(--bg-card);
+  border-color: var(--accent-color);
+}
+
+.btn-system-danger {
+  color: #ff4d4f;
+  border-color: rgba(255, 77, 79, 0.3);
+}
+
+.btn-system-danger:hover {
+  background-color: rgba(255, 77, 79, 0.15);
+  border-color: #ff4d4f;
+}
+
+.panel-hint-footer {
+  text-align: center;
+  font-size: clamp(8px, 0.85vmin, 10px);
+  color: var(--text-muted);
+  border-top: 1px solid var(--border-color);
+  padding-top: 4px;
+}
+
+/* ==========================================================================
+   7. MODAL DE CONFIRMACIÓN
+   ========================================================================== */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.modal-overlay.show {
+  display: flex;
+}
+
+.modal-box {
+  background-color: var(--bg-card);
+  border: 2px solid var(--border-color);
+  border-radius: 14px;
+  padding: 24px 30px;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7);
+  animation: modalZoom 0.25s ease;
+}
+
+@keyframes modalZoom {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.modal-icon {
+  font-size: 36px;
+  margin-bottom: 6px;
+}
+
+.modal-title {
+  font-size: clamp(16px, 2.2vmin, 22px);
+  font-weight: 800;
+  margin-bottom: 6px;
+  color: var(--text-primary);
+}
+
+.modal-desc {
+  font-size: clamp(11px, 1.4vmin, 14px);
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.btn-modal-secondary {
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-modal-danger {
+  background: #e63946;
+  border: none;
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-modal-danger:hover {
+  background: #b91c1c;
+}

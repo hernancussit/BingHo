@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="clasico">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BingHo - Tablero 1 al 90</title>
+  <link rel="icon" type="image/png" href="icon.png">
+  <!-- Google Fonts: Outfit y Chakra Petch para visualización LED de alta tecnología -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700;800;900&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-clasico">
+  <div class="app-container" id="appContainer">
+    
+    <!-- =================================================================
+         COLUMNA IZQUIERDA: INFORMACIÓN Y ESTADÍSTICAS DEL SORTEO (LED)
+         ================================================================= -->
+    <aside class="left-info-bar" id="leftInfoBar">
+      
+      <!-- Estado y Título del Sorteo (Controlado por la barra lateral) -->
+      <div class="info-section draw-header-box">
+        <span class="badge-live">● EN VIVO</span>
+        <div class="draw-title-display" id="drawTitleDisplay">SORTEO N° 001</div>
+        <div class="stat-counter-box">
+          <span class="stat-counter-label">CANTADOS</span>
+          <span class="stat-counter-value" id="statCounter">0 / 90</span>
+        </div>
+      </div>
+
+      <!-- Tarjeta del Último Número Cantado -->
+      <div class="info-section last-number-box">
+        <div class="last-number-label">ÚLTIMO NÚMERO</div>
+        <div class="last-number-display" id="currentNumberDisplay">--</div>
+      </div>
+
+      <!-- Banner de Estado Modo Auditoría BINGO -->
+      <div class="audit-status-badge" id="auditStatusBadge" style="display: none;">
+        <span class="audit-pulse-dot"></span>
+        <span>MODO AUDITORÍA</span>
+      </div>
+
+      <!-- Historial Reciente de Salidos (Botones Grandes Apilados Verticalmente) -->
+      <div class="info-section history-section">
+        <span class="history-section-title">ÚLTIMOS SALIDOS</span>
+        <div class="history-list-full" id="historyChips">
+          <span class="history-empty">Esperando sorteo...</span>
+        </div>
+      </div>
+
+      <!-- Mensaje de Notificación de Auditoría en Tiempo Real -->
+      <div class="audit-toast" id="auditToast" style="display: none;">
+        <div class="audit-toast-icon" id="auditToastIcon">✅</div>
+        <div class="audit-toast-text">
+          <div class="audit-toast-title" id="auditToastTitle">N° 45 VÁLIDO</div>
+          <div class="audit-toast-desc" id="auditToastDesc">Fue el #12 en salir</div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- =================================================================
+         ZONA CENTRAL: TABLERO MAXIMIZADO 1-90 (BLOQUEADO A CLIC DIRECTO)
+         ================================================================= -->
+    <main class="main-board-area" id="mainBoardArea">
+      <div class="board-container">
+        <div class="bingo-board" id="bingoBoard" aria-label="Tablero de Bingo 1 al 90">
+          <!-- 90 Celdas generadas dinámicamente -->
+        </div>
+      </div>
+    </main>
+
+    <!-- =================================================================
+         PANEL DE CONTROL DERECHO (BingHo)
+         ================================================================= -->
+    <aside class="control-panel" id="controlPanel">
+      
+      <div class="panel-top-title">
+        <h2 class="panel-title">BingHo</h2>
+      </div>
+
+      <!-- Control del Número / Título del Sorteo -->
+      <div class="control-group">
+        <label for="drawTitleInput" class="control-label">N° DE SORTEO</label>
+        <input 
+          type="text" 
+          id="drawTitleInput" 
+          class="sidebar-draw-input" 
+          value="SORTEO N° 001" 
+          placeholder="SORTEO N° 001"
+          maxlength="20"
+          title="Ingrese el número o nombre del sorteo"
+        />
+      </div>
+
+      <!-- Entrada de Número del Sorteo -->
+      <div class="control-group">
+        <label for="numberInput" class="control-label" id="inputLabel">NÚMERO (1-90)</label>
+        <div class="input-row">
+          <input 
+            type="number" 
+            id="numberInput" 
+            class="number-input" 
+            placeholder="00" 
+            min="1" 
+            max="90" 
+            autocomplete="off"
+            autofocus 
+          />
+          <button id="btnSubmitNumber" class="btn-submit" title="Registrar número (Enter)">↵</button>
+        </div>
+        <div class="input-hint" id="inputHint">Presione [Enter]</div>
+      </div>
+
+      <!-- Botón Gigante Toggle BINGO! -->
+      <div class="control-group">
+        <button id="btnBingoToggle" class="btn-bingo" aria-pressed="false" title="Alternar Modo Auditoría BINGO (Ctrl+B)">
+          <span class="bingo-btn-text">BINGO!</span>
+          <span class="bingo-btn-status" id="bingoStatusText">SORTEO</span>
+        </button>
+      </div>
+
+      <!-- Control Deslizante de Escala de Fuente (60% a 130%) -->
+      <div class="control-group">
+        <div class="slider-header-row">
+          <label for="fontSizeSlider" class="control-label">TAMAÑO FUENTE</label>
+          <span class="slider-badge" id="fontSizeValue">100%</span>
+        </div>
+        <input 
+          type="range" 
+          id="fontSizeSlider" 
+          class="font-size-slider" 
+          min="60" 
+          max="130" 
+          value="100" 
+          step="1"
+          title="Ajustar escala de los números (60% - 130%)"
+        />
+      </div>
+
+      <!-- Corrección de Errores de Tipeo (Campo Integrado sin Modal) -->
+      <div class="control-group">
+        <span class="control-label">CORREGIR / QUITAR N°</span>
+        <div class="remove-inline-row">
+          <input 
+            type="number" 
+            id="removeInlineInput" 
+            class="remove-inline-input" 
+            placeholder="00" 
+            min="1" 
+            max="90"
+            title="Ingrese el número a quitar del sorteo" 
+          />
+          <button id="btnRemoveInline" class="btn-remove-inline" title="Quitar este número del sorteo">
+            ✕ Quitar
+          </button>
+        </div>
+        <button id="btnUndo" class="btn-tool" title="Deshacer el último número ingresado">
+          ↺ Deshacer Último
+        </button>
+      </div>
+
+      <!-- Selector de Temas Visuales -->
+      <div class="control-group">
+        <span class="control-label">TEMA</span>
+        <div class="theme-buttons-compact">
+          <button class="btn-theme-chip active" data-theme="clasico" title="Clásico">
+            <span class="dot clasico-dot"></span> Clásico
+          </button>
+          <button class="btn-theme-chip" data-theme="alto-contraste" title="Alto Contraste">
+            <span class="dot alto-contraste-dot"></span> Contraste
+          </button>
+          <button class="btn-theme-chip" data-theme="luz-dia" title="Luz de Día">
+            <span class="dot luz-dia-dot"></span> Luz Día
+          </button>
+        </div>
+      </div>
+
+      <!-- Acciones del Sistema -->
+      <div class="control-group panel-actions-compact">
+        <button id="btnFullscreen" class="btn-system" title="Alternar Pantalla Completa (F11)">
+          ⛶ <span id="fullscreenText">Pantalla Completa</span>
+        </button>
+        
+        <button id="btnSoundToggle" class="btn-system" title="Alternar Efectos de Sonido">
+          <span id="soundIcon">🔊</span> <span id="soundText">Sonido: ON</span>
+        </button>
+
+        <button id="btnReset" class="btn-system btn-system-danger" title="Reiniciar para un nuevo sorteo">
+          🗑 Nuevo Sorteo
+        </button>
+      </div>
+
+      <div class="panel-hint-footer">
+        F11: Fullscreen | Ctrl+B: Bingo
+      </div>
+
+    </aside>
+
+  </div>
+
+  <!-- =================================================================
+       MODAL DE CONFIRMACIÓN DE REINICIO (NUEVO SORTEO)
+       ================================================================= -->
+  <div class="modal-overlay" id="confirmModalOverlay">
+    <div class="modal-box">
+      <div class="modal-icon">⚠️</div>
+      <h3 class="modal-title">¿Iniciar Nuevo Sorteo?</h3>
+      <p class="modal-desc">Esta acción borrará todos los números cantados y limpiará la persistencia actual.</p>
+      <div class="modal-actions">
+        <button class="btn-modal-secondary" id="btnCancelReset">Cancelar</button>
+        <button class="btn-modal-danger" id="btnConfirmReset">Sí, Reiniciar Todo</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
