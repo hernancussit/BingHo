@@ -55,3 +55,9 @@ Aplicación para la gestión, control y proyección en vivo de tableros de Bingo
 1. **Descargar**: Descarga la última versión del archivo `BingHo.exe` desde la sección de **[Releases](https://github.com/hernancussit/BingHo/releases)**.
 2. **Ejecutar**: Haz doble clic sobre `BingHo.exe` para iniciar la aplicación de forma inmediata.
 3. **Proyectar**: Presiona `F11` para activar el modo pantalla completa en tu monitor, proyector o pantalla LED.
+
+---
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia **[MIT](LICENSE)**.
