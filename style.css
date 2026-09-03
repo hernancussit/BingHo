@@ -126,21 +126,27 @@
   -webkit-user-select: none;
 }
 
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
 body {
   font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: var(--bg-main);
   color: var(--text-primary);
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
   line-height: 1.15;
 }
 
 .app-container {
   display: flex;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
+  max-height: 100vh;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 /* ==========================================================================
@@ -152,16 +158,18 @@ body {
   width: 19%;
   min-width: 200px;
   max-width: 270px;
-  height: 100vh;
+  height: 100%;
+  max-height: 100vh;
   background-color: var(--bg-left-bar);
   border-right: 2px solid var(--border-color);
-  padding: 1.2vh 1vw;
+  padding: 1.2vh 1vw max(1.4vh, 12px);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   gap: 1vh;
   z-index: 5;
   box-shadow: 4px 0 15px rgba(0, 0, 0, 0.3);
+  box-sizing: border-box;
 }
 
 .info-section {
@@ -422,14 +430,16 @@ body {
 
 .main-board-area {
   flex: 1;
-  height: 100vh;
+  height: 100%;
+  max-height: 100vh;
   background-color: var(--bg-board-area);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.2vh 1vw;
+  padding: 1vh 1vw max(1.2vh, 10px);
   position: relative;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .board-container {
@@ -438,19 +448,23 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 0;
+  min-width: 0;
 }
 
-/* Grilla de 10 columnas × 9 filas con tamaño maximizado (96vh) */
+/* Grilla de 10 columnas × 9 filas con tamaño maximizado seguro (93vh / minmax para no desbordar) */
 .bingo-board {
   display: grid;
-  grid-template-columns: repeat(10, 1fr);
-  grid-template-rows: repeat(9, 1fr);
-  gap: clamp(3px, 0.65vmin, 9px);
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  grid-template-rows: repeat(9, minmax(0, 1fr));
+  gap: clamp(2px, 0.6vmin, 8px);
   width: 100%;
-  height: 96vh;
-  max-width: calc(96vh * (10 / 9));
+  height: calc(100% - max(0.6vh, 6px));
+  max-height: 93vh;
+  max-width: calc(93vh * (10 / 9));
   aspect-ratio: 10 / 9;
   margin: auto;
+  box-sizing: border-box;
 }
 
 /* Celda Normal (Escalado nítido de 60% a 130% sin distorsión) */
@@ -551,17 +565,19 @@ body {
   width: 13%;
   min-width: 160px;
   max-width: 210px;
-  height: 100vh;
+  height: 100%;
+  max-height: 100vh;
   background-color: var(--bg-panel);
   border-left: 2px solid var(--border-color);
-  padding: 1.2vh 0.8vw;
+  padding: 1vh 0.8vw max(1.4vh, 12px);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 0.8vh;
+  gap: 0.7vh;
   z-index: 5;
   box-shadow: -4px 0 15px rgba(0, 0, 0, 0.35);
   overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .panel-top-title {
@@ -649,13 +665,13 @@ body {
 
 .number-input {
   flex: 1;
-  height: clamp(38px, 4.8vh, 52px);
+  height: clamp(34px, 4.4vh, 48px);
   background-color: var(--bg-main);
   border: 2px solid var(--border-color);
   border-radius: 6px;
   color: var(--text-primary);
   font-family: 'Chakra Petch', monospace;
-  font-size: clamp(20px, 2.8vmin, 32px);
+  font-size: clamp(18px, 2.6vmin, 30px);
   font-weight: 900;
   text-align: center;
   outline: none;
@@ -699,7 +715,7 @@ body {
 /* BOTÓN GIGANTE TOGGLE BINGO! */
 .btn-bingo {
   width: 100%;
-  padding: 1.2vh 0.4vw;
+  padding: clamp(6px, 1vh, 12px) 0.4vw;
   background: linear-gradient(135deg, #222222, #141414);
   border: 2px solid var(--border-color);
   border-radius: 10px;
@@ -758,7 +774,7 @@ body {
 
 .remove-inline-input {
   width: 50px;
-  height: 34px;
+  height: 30px;
   background-color: var(--bg-main);
   border: 1px solid var(--border-color);
   border-radius: 6px;
@@ -784,7 +800,7 @@ body {
 
 .btn-remove-inline {
   flex: 1;
-  height: 34px;
+  height: 30px;
   background-color: rgba(255, 77, 79, 0.15);
   border: 1px solid rgba(255, 77, 79, 0.4);
   border-radius: 6px;
@@ -803,7 +819,7 @@ body {
 
 .btn-tool {
   width: 100%;
-  padding: 6px 8px;
+  padding: 5px 8px;
   background-color: var(--bg-main);
   border: 1px solid var(--border-color);
   border-radius: 6px;
@@ -832,7 +848,7 @@ body {
   align-items: center;
   gap: 6px;
   width: 100%;
-  padding: 6px 8px;
+  padding: clamp(4px, 0.65vh, 6px) 8px;
   background-color: var(--bg-main);
   border: 1px solid var(--border-color);
   border-radius: 6px;
@@ -875,7 +891,7 @@ body {
 
 .btn-system {
   width: 100%;
-  padding: 6px 8px;
+  padding: clamp(4px, 0.65vh, 6px) 8px;
   background-color: var(--bg-main);
   border: 1px solid var(--border-color);
   border-radius: 6px;

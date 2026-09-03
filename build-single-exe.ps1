@@ -7,7 +7,7 @@ Write-Host ">>> Paso 1: Generando empaquetado base de Electron (BingHo)..." -For
 $distPath = "dist\BingHo-win32-x64"
 $zipPath = "dist\app_payload.zip"
 $portableExe = "dist\BingHo.exe"
-$releaseZip = "dist\BingHo-v0.9.0-beta-Windows-x64.zip"
+$releaseZip = "dist\BingHo-v0.9.1-beta-Windows-x64.zip"
 $sourceFile = "dist\Launcher.cs"
 $iconPath = "icon.ico"
 $buildId = [Guid]::NewGuid().ToString()
@@ -35,8 +35,8 @@ using System.Windows.Forms;
 [assembly: AssemblyTrademark("BingHo")]
 [assembly: AssemblyCulture("")]
 [assembly: ComVisible(false)]
-[assembly: AssemblyVersion("0.9.0.0")]
-[assembly: AssemblyFileVersion("0.9.0.0")]
+[assembly: AssemblyVersion("0.9.1.0")]
+[assembly: AssemblyFileVersion("0.9.1.0")]
 
 namespace BingHo
 {

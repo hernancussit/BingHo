@@ -1,12 +1,17 @@
-const { app, BrowserWindow, globalShortcut, ipcMain, Menu } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, Menu, screen } = require('electron');
 const path = require('path');
 
 let mainWindow = null;
 
 function createWindow() {
+  const primaryDisplay = screen ? screen.getPrimaryDisplay() : null;
+  const workArea = primaryDisplay ? primaryDisplay.workAreaSize : { width: 1280, height: 800 };
+  const initialWidth = Math.min(1280, workArea.width);
+  const initialHeight = Math.min(800, workArea.height);
+
   mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 800,
+    width: initialWidth,
+    height: initialHeight,
     minWidth: 800,
     minHeight: 600,
     backgroundColor: '#060b18',
@@ -22,6 +27,11 @@ function createWindow() {
     }
   });
 
+  // Bloquear zoom involuntario por atajos o rueda de ratón
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow.webContents.setVisualZoomLevelLimits(1, 1);
+  });
+
   // Deshabilitar la barra de menú completamente
   Menu.setApplicationMenu(null);
 
@@ -33,12 +43,15 @@ function createWindow() {
 
   mainWindow.on('enter-full-screen', () => {
     if (mainWindow && !mainWindow.isDestroyed()) {
+      // En Windows, setAlwaysOnTop('screen-saver') evita que la barra de tareas tape el fondo
+      mainWindow.setAlwaysOnTop(true, 'screen-saver');
       mainWindow.webContents.send('fullscreen-change', true);
     }
   });
 
   mainWindow.on('leave-full-screen', () => {
     if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.setAlwaysOnTop(false);
       mainWindow.webContents.send('fullscreen-change', false);
     }
   });
@@ -50,8 +63,14 @@ function createWindow() {
 
 function toggleFullScreen() {
   if (mainWindow) {
-    const isFull = mainWindow.isFullScreen();
-    mainWindow.setFullScreen(!isFull);
+    const willBeFull = !mainWindow.isFullScreen();
+    if (willBeFull) {
+      mainWindow.setAlwaysOnTop(true, 'screen-saver');
+      mainWindow.setFullScreen(true);
+    } else {
+      mainWindow.setFullScreen(false);
+      mainWindow.setAlwaysOnTop(false);
+    }
   }
 }
 
@@ -81,6 +100,7 @@ app.whenReady().then(() => {
   globalShortcut.register('Escape', () => {
     if (mainWindow && mainWindow.isFullScreen()) {
       mainWindow.setFullScreen(false);
+      mainWindow.setAlwaysOnTop(false);
     }
   });
 
