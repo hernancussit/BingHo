@@ -1,4 +1,4 @@
-# Script para compilar BingHo a un único archivo ejecutable portable .EXE con icono personalizado
+# Script para compilar BingHo a un único archivo ejecutable portable .EXE con icono y metadatos completos
 $ErrorActionPreference = "Stop"
 
 Write-Host ">>> Paso 1: Generando empaquetado base de Electron (BingHo)..." -ForegroundColor Cyan
@@ -7,6 +7,7 @@ Write-Host ">>> Paso 1: Generando empaquetado base de Electron (BingHo)..." -For
 $distPath = "dist\BingHo-win32-x64"
 $zipPath = "dist\app_payload.zip"
 $portableExe = "dist\BingHo.exe"
+$releaseZip = "dist\BingHo-v0.9.0-beta-Windows-x64.zip"
 $sourceFile = "dist\Launcher.cs"
 $iconPath = "icon.ico"
 $buildId = [Guid]::NewGuid().ToString()
@@ -15,14 +16,27 @@ Write-Host ">>> Paso 2: Creando archivo comprimido de la aplicación..." -Foregr
 if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
 Compress-Archive -Path "$distPath\*" -DestinationPath $zipPath -CompressionLevel Fastest -Force
 
-Write-Host ">>> Paso 3: Generando código del lanzador portable autónomo (Build ID: $buildId)..." -ForegroundColor Cyan
+Write-Host ">>> Paso 3: Generando código del lanzador portable con metadatos completos de Windows (Build ID: $buildId)..." -ForegroundColor Cyan
 $csharpCode = @"
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
+
+[assembly: AssemblyTitle("BingHo")]
+[assembly: AssemblyDescription("BingHo - Tablero de Bingo 1 al 90 para pantallas LED y proyección")]
+[assembly: AssemblyConfiguration("")]
+[assembly: AssemblyCompany("BingHo")]
+[assembly: AssemblyProduct("BingHo")]
+[assembly: AssemblyCopyright("Copyright © 2026 Hernán Cussit")]
+[assembly: AssemblyTrademark("BingHo")]
+[assembly: AssemblyCulture("")]
+[assembly: ComVisible(false)]
+[assembly: AssemblyVersion("0.9.0.0")]
+[assembly: AssemblyFileVersion("0.9.0.0")]
 
 namespace BingHo
 {
@@ -109,7 +123,7 @@ namespace BingHo
 
 Set-Content -Path $sourceFile -Value $csharpCode -Encoding UTF8
 
-Write-Host ">>> Paso 4: Compilando ejecutable único portable con icono (.ICO) mediante csc.exe..." -ForegroundColor Cyan
+Write-Host ">>> Paso 4: Compilando ejecutable único portable con icono y AssemblyInfo mediante csc.exe..." -ForegroundColor Cyan
 $cscPath = "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
 $arguments = @(
     "/target:winexe",
@@ -129,8 +143,15 @@ $arguments = @(
 if (Test-Path $portableExe) {
     Remove-Item $zipPath -Force -ErrorAction SilentlyContinue
     Remove-Item $sourceFile -Force -ErrorAction SilentlyContinue
+    
+    # Crear también el paquete comprimido .ZIP para descargas limpias
+    if (Test-Path $releaseZip) { Remove-Item $releaseZip -Force }
+    Compress-Archive -Path $portableExe -DestinationPath $releaseZip -Force
+    
     $sizeMb = [Math]::Round(((Get-Item $portableExe).Length / 1MB), 2)
+    $zipMb = [Math]::Round(((Get-Item $releaseZip).Length / 1MB), 2)
     Write-Host ">>> ¡EXITO! Ejecutable portable BingHo.exe generado en: $portableExe ($sizeMb MB)" -ForegroundColor Green
+    Write-Host ">>> ¡EXITO! Archivo ZIP de distribución generado en: $releaseZip ($zipMb MB)" -ForegroundColor Green
 } else {
     Write-Host ">>> Error al compilar el ejecutable portable." -ForegroundColor Red
 }

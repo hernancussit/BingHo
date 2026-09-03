@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "start": "electron .",
-    "package:win": "electron-packager . \"BingHo\" --platform=win32 --arch=x64 --icon=icon.ico --out=dist --overwrite --prune=true",
+    "package:win": "electron-packager . \"BingHo\" --platform=win32 --arch=x64 --icon=icon.ico --out=dist --overwrite --prune=true --app-version=\"0.9.0\" --build-version=\"0.9.0\" --win32metadata.CompanyName=\"BingHo\" --win32metadata.FileDescription=\"BingHo - Tablero de Bingo\" --win32metadata.ProductName=\"BingHo\"",
     "build:single": "powershell -ExecutionPolicy Bypass -File ./build-single-exe.ps1",
     "build:win": "electron-builder --win",
     "build:portable": "electron-builder --win portable",
