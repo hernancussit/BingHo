@@ -522,17 +522,43 @@ ipcMain.handle('download-and-install-update', async (event, downloadUrl) => {
     const targetExe = process.env.BINGHO_PORTABLE_EXE || process.env.PORTABLE_EXECUTABLE_FILE;
 
     if (targetExe && fs.existsSync(targetExe)) {
-      // Crear script .BAT en el directorio temporal para esperar el cierre de BingHo, reemplazar el EXE y relanzarlo
+      // Crear script .BAT robusto en el directorio temporal para esperar el cierre de BingHo, reemplazar el EXE y relanzarlo
       const scriptPath = path.join(tempDir, `bingho_updater_${Date.now()}.bat`);
       const batContent = `@echo off
-setlocal
-:: Esperar 2 segundos a que el proceso BingHo libere el archivo EXE
-timeout /t 2 /nobreak > nul
-:: Reemplazar el ejecutable original por la nueva versión descargada
-copy /y "${updateExePath}" "${targetExe}" > nul
-del "${updateExePath}" > nul
+setlocal EnableDelayedExpansion
+
+:: 1. Forzar cierre de cualquier proceso de BingHo para liberar el bloqueo del archivo ejecutable
+taskkill /F /IM BingHo.exe /T >nul 2>&1
+timeout /t 1 /nobreak >nul
+
+:: 2. Reintentar la copia del nuevo ejecutable con verificación de éxito (hasta 15 intentos)
+set RETRY_COUNT=0
+:RETRY_LOOP
+set /a RETRY_COUNT+=1
+copy /Y "${updateExePath}" "${targetExe}" >nul 2>&1
+if not errorlevel 1 goto COPY_SUCCESS
+
+if !RETRY_COUNT! LEQ 15 (
+    timeout /t 1 /nobreak >nul
+    taskkill /F /IM BingHo.exe /T >nul 2>&1
+    goto RETRY_LOOP
+)
+
+:: Si la copia falló tras 15 intentos, saltar directamente a iniciar
+goto FINISH
+
+:COPY_SUCCESS
+:: Eliminar el instalador temporal sólo si la copia fue 100% exitosa
+del /F /Q "${updateExePath}" >nul 2>&1
+
+:: Limpiar el caché de la versión anterior para forzar extracción limpia de la nueva build
+set LOCAL_APP=%LOCALAPPDATA%\\BingHoApp
+if exist "%LOCAL_APP%\\.build_id" del /F /Q "%LOCAL_APP%\\.build_id" >nul 2>&1
+
+:FINISH
 :: Iniciar la versión actualizada de BingHo
 start "" "${targetExe}"
+
 :: Autoeliminar este script
 (goto) 2>nul & del "%~f0"
 exit
@@ -548,7 +574,7 @@ exit
 
       setTimeout(() => {
         app.quit();
-      }, 400);
+      }, 300);
 
       return { success: true, restarting: true };
     } else {
@@ -561,7 +587,7 @@ exit
 
       setTimeout(() => {
         app.quit();
-      }, 400);
+      }, 300);
 
       return { success: true, restarting: true };
     }

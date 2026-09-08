@@ -21,7 +21,7 @@ $appVersion = $pkg.version
 $cleanVer = ($appVersion -split '-')[0]
 $assemblyVer = if ($cleanVer -match '^\d+\.\d+\.\d+$') { "$cleanVer.$buildNumber" } else { "1.0.0.$buildNumber" }
 
-& "C:\Program Files\nodejs\npx.cmd" -y @electron/packager . "BingHo" --platform=win32 --arch=x64 --icon=icon.ico --out=dist --overwrite --prune=true "--app-version=$cleanVer.$buildNumber" "--build-version=$cleanVer.$buildNumber" '--win32metadata.CompanyName=BingHo' '--win32metadata.FileDescription=BingHo - Tablero de Bingo' '--win32metadata.ProductName=BingHo'
+& "C:\Program Files\nodejs\npx.cmd" -y @electron/packager . "BingHo" --platform=win32 --arch=x64 --icon=icon.ico --out=dist --overwrite --prune=true --ignore="^/dist" --ignore="^/scratch" --ignore="\.git" "--app-version=$cleanVer.$buildNumber" "--build-version=$cleanVer.$buildNumber" '--win32metadata.CompanyName=BingHo' '--win32metadata.FileDescription=BingHo - Sistema Profesional para Tableros de Bingo' '--win32metadata.ProductName=BingHo'
 Start-Sleep -Seconds 1
 
 $distPath = "dist\BingHo-win32-x64"
