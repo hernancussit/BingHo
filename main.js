@@ -10,9 +10,10 @@ function fetchLatestRelease() {
   return new Promise((resolve, reject) => {
     const options = {
       hostname: 'api.github.com',
-      path: '/repos/hernancussit/BingHo/releases/latest',
+      path: '/repos/hernancussit/BingHo/releases?per_page=10',
       headers: {
-        'User-Agent': 'BingHo-Desktop-App'
+        'User-Agent': 'BingHo-Desktop-App',
+        'Accept': 'application/vnd.github.v3+json'
       }
     };
 
@@ -22,7 +23,15 @@ function fetchLatestRelease() {
       res.on('end', () => {
         if (res.statusCode >= 200 && res.statusCode < 300) {
           try {
-            resolve(JSON.parse(data));
+            const releases = JSON.parse(data);
+            if (Array.isArray(releases) && releases.length > 0) {
+              const published = releases.filter(r => !r.draft);
+              if (published.length > 0) {
+                published.sort((a, b) => compareVersions(b.tag_name || b.name, a.tag_name || a.name));
+                return resolve(published[0]);
+              }
+            }
+            reject(new Error('No se encontraron versiones publicadas en el repositorio.'));
           } catch (e) {
             reject(e);
           }

@@ -38,4 +38,5 @@ jobs:
             dist/BingHo.exe
             dist/BingHo-*.zip
           draft: false
-          prerelease: ${{ contains(github.ref_name, 'beta') || contains(github.ref_name, 'alpha') }}
+          make_latest: true
+          prerelease: false
