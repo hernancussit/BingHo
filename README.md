@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/Licencia-MIT-ffd700)](LICENSE)
 [![Cafecito](https://img.shields.io/badge/Donar-Cafecito.app-ff813f?logo=coffeescript&logoColor=white)](https://cafecito.app/henu_45)
 
-**BingHo** es un sistema profesional, moderno y gratuito para la gestión, control y proyección en tiempo real de tableros de Bingo (números del 1 al 90). Diseñado específicamente para eventos presenciales, salones de fiestas, festivales, clubes deportivos, peñas benéficas, escuelas, transmisiones en vivo (streaming) y pantallas LED de gran formato.
+**BingHo** es un sistema profesional, moderno y gratuito para la gestión, control y proyección en tiempo real de tableros de Bingo. Diseñado específicamente para eventos presenciales, salones de fiestas, festivales, clubes deportivos, peñas benéficas, escuelas, transmisiones en vivo (streaming) y pantallas LED de gran formato.
 
 ### 🎮 Tablero Principal y Control de Sorteo
 ![BingHo - Tablero de Control y Sorteo en Vivo](preview.png)
@@ -27,7 +27,7 @@ Si **BingHo** te ha sido de utilidad para tus sorteos o eventos y deseas colabor
 
 ### 🖥️ Modo Segunda Pantalla (Proyector / Pantalla Extendida)
 - Permite proyectar en un segundo monitor, proyector o pantalla gigante LED utilizando el **modo escritorio extendido de Windows**.
-- La ventana de proyección muestra exclusivamente el panel informativo y el tablero 1 al 90 maximizados al **100% del espacio visual**, ocultando todos los controles del operador para una visualización limpia e ininterrumpida.
+- La ventana de proyección muestra exclusivamente el panel informativo y el tablero maximizados al **100% del espacio visual**, ocultando todos los controles del operador para una visualización limpia e ininterrumpida.
 - Sincronización instantánea y sin latencia entre el operador y el proyector.
 - Atajo rápido: **`[F10]`**.
 

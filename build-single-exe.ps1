@@ -59,7 +59,7 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 [assembly: AssemblyTitle("BingHo")]
-[assembly: AssemblyDescription("BingHo - Tablero de Bingo 1 al 90 para pantallas LED y proyección")]
+[assembly: AssemblyDescription("BingHo - Sistema Profesional para Tableros de Bingo en pantallas LED y proyección")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("BingHo")]
 [assembly: AssemblyProduct("BingHo")]
