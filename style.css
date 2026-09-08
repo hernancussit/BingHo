@@ -188,28 +188,64 @@ body {
 
 .draw-header-top-row {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
+  padding: 2px 0 4px 0;
 }
 
 .badge-live {
-  font-size: clamp(9px, 1.1vmin, 12px);
+  font-size: clamp(11.5px, 1.35vmin, 15px);
   font-weight: 900;
-  letter-spacing: 1.5px;
+  letter-spacing: 2px;
   color: #ff3344;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-shadow: 0 0 10px rgba(255, 51, 68, 0.6);
   animation: liveBlink 1.8s infinite ease-in-out;
 }
 
 .draw-version-badge {
+  display: none;
+}
+
+/* Pie con Enlace a GitHub de la Versión en Barra Izquierda */
+.left-bar-footer {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 4px;
+  border-top: 1px solid var(--border-color);
+}
+
+.left-bar-version-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-family: 'Chakra Petch', monospace;
-  font-size: clamp(8.5px, 0.95vmin, 11px);
-  font-weight: 800;
+  font-size: clamp(9px, 1vmin, 11px);
+  font-weight: 700;
+  color: var(--text-muted);
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-color);
+  padding: 3px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.left-bar-version-link:hover {
   color: var(--accent-color);
   background: rgba(0, 210, 255, 0.12);
-  border: 1px solid rgba(0, 210, 255, 0.3);
-  padding: 1px 6px;
-  border-radius: 4px;
-  letter-spacing: 0.5px;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 10px var(--border-glow);
+  transform: translateY(-1px);
+}
+
+.left-bar-version-icon {
+  font-size: clamp(10px, 1.1vmin, 12px);
 }
 
 @keyframes liveBlink {
@@ -635,6 +671,16 @@ body {
   padding: 1px 6px;
   border-radius: 6px;
   letter-spacing: 0.5px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.app-version-badge:hover {
+  background: rgba(0, 210, 255, 0.3);
+  border-color: var(--accent-color);
+  box-shadow: 0 0 10px var(--border-glow);
+  transform: translateY(-1px);
 }
 
 .panel-author-credit {
@@ -1118,9 +1164,19 @@ body {
   line-height: 1.2;
 }
 
-.footer-credits span {
+.footer-credits span,
+.footer-credits a.version-github-link {
   font-family: 'Chakra Petch', monospace;
   color: var(--accent-color);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.footer-credits a.version-github-link:hover {
+  color: #00ff66;
+  text-decoration: underline;
+  text-shadow: 0 0 8px rgba(0, 255, 102, 0.5);
 }
 
 .footer-credits b {

@@ -8,6 +8,10 @@ const packageJson = require('./package.json');
 let mainWindow = null;
 let projectorWindow = null;
 
+if (process.platform === 'win32') {
+  app.setAppUserModelId('com.bingho.tablero');
+}
+
 // ==========================================================================
 // CONTROL DE INSTANCIA ÚNICA (PREVENIR DUPLICADOS Y GESTIONAR CIERRE)
 // ==========================================================================

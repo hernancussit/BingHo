@@ -59,16 +59,29 @@ Si **BingHo** te ha sido de utilidad para tus sorteos o eventos y deseas colabor
 - **Alto Contraste**: Fondo negro absoluto con tipografía cian y blanca, ideal para pantallas OLED o paneles LED en exteriores.
 - **Luz de Día**: Fondo claro con azul rey profundo, optimizado para evitar cualquier interferencia con los colores verde y rojo de auditoría.
 
+### 🔊 5 Perfiles de Sonido Sintetizado y Modo Silencio
+- Menú desplegable para seleccionar el ambiente sonoro adecuado para tu evento:
+  - 🔔 **Clásico**: Campanillas de bolillero y fanfarria tradicional.
+  - 👾 **Arcade / 8-Bit**: Efectos retro y melodía chip-tune.
+  - 🪵 **Marimba Suave**: Sonidos de madera acústicos y cálidos.
+  - ✨ **Digital / Pop**: Tono pop moderno y campanillas festivas.
+  - 🛎️ **Campanilla**: Campanas cristalinas y ding metálico.
+  - 🔇 **Sin Sonido**: Silencio absoluto para sorteos con locutor en vivo.
+
 ### 🔒 Tablero Protegido y Corrección Inline Dinámica
 - Las celdas del tablero principal están bloqueadas a clics directos para prevenir marcaciones accidentales.
 - Panel de corrección rápida para quitar números ingresados por error o deshacer el último número (`Ctrl+Z`), adaptándose automáticamente al modo Sorteo o al modo Auditoría.
 
+### 🛡️ Control de Instancia Única y Gestión de Procesos
+- Evita la apertura accidental de múltiples instancias simultáneas de BingHo.
+- Diálogo inteligente con botón **"Cerrar"** que termina procesos residuales en segundo plano si los archivos estuviesen bloqueados.
+
 ### 💾 Persistencia Anti-Cierre (Protección Total de Datos)
-- Todo el estado del sorteo (números cantados, título, tema, escala) se almacena continuamente en tiempo real.
+- Todo el estado del sorteo (números cantados, título, tema, escala y sonido) se almacena continuamente en tiempo real.
 - Si la aplicación o el equipo se cierra por accidente, al reabrir BingHo la partida continúa exactamente donde quedó.
 
-### 🚀 Portabilidad Total (Single EXE)
-- Empaquetado como un **único archivo `.exe` portable**.
+### 🚀 Portabilidad Total (Single EXE de ~94 MB)
+- Empaquetado como un **único archivo `.exe` portable**, optimizado y con dependencias integradas.
 - No requiere instalación, instaladores pesados ni configuración de entornos adicionales. Listo para usar desde un pendrive o cualquier carpeta.
 
 ---

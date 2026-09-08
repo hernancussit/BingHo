@@ -86,8 +86,9 @@ const DOM = {
   winnerSubtitle: document.getElementById('winnerSubtitle'),
   btnCloseWinner: document.getElementById('btnCloseWinner'),
 
-  // Versión y Créditos
-  leftBarVersionBadge: document.getElementById('leftBarVersionBadge'),
+  // Versión y Créditos (Abajo a la Izquierda, Panel y Footer)
+  leftBarVersionLink: document.getElementById('leftBarVersionLink'),
+  leftBarVersionText: document.getElementById('leftBarVersionText'),
   appVersionBadge: document.getElementById('appVersionBadge'),
   footerVersionText: document.getElementById('footerVersionText'),
 
@@ -1581,6 +1582,21 @@ if (!isProjectorMode) {
     });
   }
 
+  // Enlaces hacia el GitHub del Proyecto (Versión Abajo a la Izquierda, Panel y Footer)
+  const githubProjectUrl = 'https://github.com/hernancussit/BingHo';
+  const handleOpenGitHub = (e) => {
+    if (e) e.preventDefault();
+    if (window.electronAPI && window.electronAPI.openExternalUrl) {
+      window.electronAPI.openExternalUrl(githubProjectUrl);
+    } else {
+      window.open(githubProjectUrl, '_blank');
+    }
+  };
+
+  if (DOM.leftBarVersionLink) DOM.leftBarVersionLink.addEventListener('click', handleOpenGitHub);
+  if (DOM.appVersionBadge) DOM.appVersionBadge.addEventListener('click', handleOpenGitHub);
+  if (DOM.footerVersionText) DOM.footerVersionText.addEventListener('click', handleOpenGitHub);
+
   // Descarga Manual en Navegador
   if (DOM.btnManualDownload) {
     DOM.btnManualDownload.addEventListener('click', () => {
@@ -1758,9 +1774,9 @@ window.addEventListener('keydown', (e) => {
 window.addEventListener('DOMContentLoaded', () => {
   if (isProjectorMode) {
     document.body.classList.add('projector-mode');
-    document.title = 'BingHo v0.9.7-beta - Pantalla de Proyección';
+    document.title = 'BingHo v1.0.0 - Pantalla de Proyección';
   } else {
-    document.title = 'BingHo v0.9.7-beta - Por Hernán Cussit';
+    document.title = 'BingHo v1.0.0 - Por Hernán Cussit';
   }
 
   // Cargar versión y créditos dinámicamente desde el backend si está disponible
@@ -1772,6 +1788,7 @@ window.addEventListener('DOMContentLoaded', () => {
           ? `BingHo ${display} - Pantalla de Proyección` 
           : `BingHo ${display} - Por ${info.author || 'Hernán Cussit'}`;
         document.title = titleStr;
+        if (DOM.leftBarVersionText) DOM.leftBarVersionText.textContent = display;
         if (DOM.leftBarVersionBadge) DOM.leftBarVersionBadge.textContent = display;
         if (DOM.appVersionBadge) DOM.appVersionBadge.textContent = display;
         if (DOM.footerVersionText) DOM.footerVersionText.textContent = display;
