@@ -213,16 +213,18 @@
   </div>
 
   <!-- =================================================================
-       SUPERPOSICIÓN DE CELEBRACIÓN DE CARTÓN GANADOR (CONFETI & FESTEJO)
+       SUPERPOSICIÓN DE CELEBRACIÓN DE CARTÓN GANADOR (CONFETI, FLASH & FESTEJO)
        ================================================================= -->
   <div class="winner-overlay" id="winnerOverlay" style="display: none;">
+    <div class="winner-flash-strobe"></div>
+    <div class="winner-light-rays"></div>
     <canvas id="confettiCanvas" class="confetti-canvas"></canvas>
     <div class="winner-card">
       <div class="winner-trophy-anim">🏆</div>
       <h1 class="winner-title">¡BINGO GANADOR!</h1>
       <div class="winner-subtitle" id="winnerSubtitle">¡CARTÓN AUDITADO Y VÁLIDO!</div>
       <div class="winner-badge-congrats">🎉 ¡FELICITACIONES! 🎉</div>
-      <div>
+      <div class="winner-actions-box">
         <button class="btn-winner-close" id="btnCloseWinner">Continuar / Cerrar ✕</button>
       </div>
     </div>

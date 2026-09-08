@@ -391,11 +391,12 @@ function playVictoryFanfare() {
 }
 
 // ==========================================================================
-// 6. MOTOR DE CONFETI EN CANVAS (60 FPS)
+// 6. MOTOR DE CONFETI Y FUEGOS ARTIFICIALES EN CANVAS (60 FPS)
 // ==========================================================================
 
 let confettiAnimId = null;
 let confettiParticles = [];
+let fireworkParticles = [];
 
 class ConfettiParticle {
   constructor(w, h) {
@@ -407,9 +408,9 @@ class ConfettiParticle {
   reset() {
     this.x = Math.random() * this.w;
     this.y = -20 - Math.random() * 60;
-    this.size = Math.random() * 8 + 6;
-    this.speedY = Math.random() * 3.5 + 2.5;
-    this.speedX = Math.random() * 3 - 1.5;
+    this.size = Math.random() * 9 + 6;
+    this.speedY = Math.random() * 4 + 2.5;
+    this.speedX = Math.random() * 3.5 - 1.75;
     this.rotation = Math.random() * 360;
     this.rotSpeed = Math.random() * 8 - 4;
     this.colors = ['#ffd700', '#ff9900', '#00ff66', '#00d2ff', '#ff3366', '#ffffff', '#e040fb'];
@@ -419,7 +420,7 @@ class ConfettiParticle {
 
   update() {
     this.y += this.speedY;
-    this.x += this.speedX + Math.sin(this.y / 25) * 0.8;
+    this.x += this.speedX + Math.sin(this.y / 25) * 0.9;
     this.rotation += this.rotSpeed;
 
     if (this.y > this.h + 20) {
@@ -432,17 +433,63 @@ class ConfettiParticle {
     ctx.translate(this.x, this.y);
     ctx.rotate((this.rotation * Math.PI) / 180);
     ctx.fillStyle = this.color;
-    ctx.shadowBlur = 4;
+    ctx.shadowBlur = 6;
     ctx.shadowColor = this.color;
 
     if (this.shape === 'rect') {
       ctx.fillRect(-this.size / 2, -this.size / 4, this.size, this.size / 2);
     } else {
       ctx.beginPath();
-      ctx.arc(0, 0, this.size / 2.4, 0, Math.PI * 2);
+      ctx.arc(0, 0, this.size / 2.3, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.restore();
+  }
+}
+
+class FireworkParticle {
+  constructor(x, y, color) {
+    this.x = x;
+    this.y = y;
+    this.color = color;
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * 7 + 2;
+    this.vx = Math.cos(angle) * speed;
+    this.vy = Math.sin(angle) * speed;
+    this.alpha = 1;
+    this.decay = Math.random() * 0.025 + 0.015;
+    this.size = Math.random() * 4 + 2;
+  }
+
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.vy += 0.09;
+    this.vx *= 0.98;
+    this.alpha -= this.decay;
+  }
+
+  draw(ctx) {
+    if (this.alpha <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = this.alpha;
+    ctx.fillStyle = this.color;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function spawnRandomFirework(w, h) {
+  const x = Math.random() * (w * 0.8) + w * 0.1;
+  const y = Math.random() * (h * 0.5) + h * 0.1;
+  const colors = ['#ffd700', '#00ff66', '#00e5ff', '#ff0055', '#ff9900', '#ffffff', '#e040fb'];
+  const col = colors[Math.floor(Math.random() * colors.length)];
+  for (let i = 0; i < 35; i++) {
+    fireworkParticles.push(new FireworkParticle(x, y, col));
   }
 }
 
@@ -456,19 +503,36 @@ function startConfetti() {
   canvas.height = window.innerHeight;
 
   confettiParticles = [];
-  const count = window.innerWidth > 1000 ? 140 : 80;
+  fireworkParticles = [];
+  const count = window.innerWidth > 1000 ? 160 : 90;
   for (let i = 0; i < count; i++) {
     confettiParticles.push(new ConfettiParticle(canvas.width, canvas.height));
   }
 
   if (confettiAnimId) cancelAnimationFrame(confettiAnimId);
 
+  let frameCount = 0;
   function loop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    frameCount++;
+
+    if (frameCount % 24 === 0) {
+      spawnRandomFirework(canvas.width, canvas.height);
+    }
+
     confettiParticles.forEach(p => {
       p.update();
       p.draw(ctx);
     });
+
+    for (let i = fireworkParticles.length - 1; i >= 0; i--) {
+      fireworkParticles[i].update();
+      fireworkParticles[i].draw(ctx);
+      if (fireworkParticles[i].alpha <= 0) {
+        fireworkParticles.splice(i, 1);
+      }
+    }
+
     confettiAnimId = requestAnimationFrame(loop);
   }
 
@@ -480,6 +544,7 @@ function stopConfetti() {
     cancelAnimationFrame(confettiAnimId);
     confettiAnimId = null;
   }
+  fireworkParticles = [];
   if (DOM.confettiCanvas) {
     const ctx = DOM.confettiCanvas.getContext('2d');
     if (ctx) ctx.clearRect(0, 0, DOM.confettiCanvas.width, DOM.confettiCanvas.height);

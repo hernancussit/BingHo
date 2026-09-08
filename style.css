@@ -1135,7 +1135,7 @@ body.projector-mode .bingo-cell {
 }
 
 /* ==========================================================================
-   9. SUPERPOSICIÓN DE FESTEJO DE CARTÓN GANADOR (CONFETI & CELEBRACIÓN)
+   9. SUPERPOSICIÓN DE FESTEJO DE CARTÓN GANADOR (CONFETI, FLASH & FESTEJO MAXIMIZADO)
    ========================================================================== */
 
 .winner-overlay {
@@ -1143,17 +1143,68 @@ body.projector-mode .bingo-cell {
   inset: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.82);
-  backdrop-filter: blur(8px);
+  background: rgba(4, 8, 20, 0.88);
+  backdrop-filter: blur(10px);
   display: none;
   align-items: center;
   justify-content: center;
   z-index: 5000;
-  animation: winnerFadeIn 0.35s ease;
+  overflow: hidden;
+  animation: winnerOverlayFadeIn 0.3s ease;
 }
 
 .winner-overlay.show {
   display: flex !important;
+}
+
+/* Efecto Flash Estroboscópico de Alta Energía */
+.winner-flash-strobe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5001;
+  animation: winnerFlashBurst 1.2s infinite ease-in-out;
+}
+
+@keyframes winnerFlashBurst {
+  0% { opacity: 0.1; background: radial-gradient(circle at center, rgba(255, 255, 255, 0.2) 0%, transparent 60%); }
+  5% { opacity: 0.95; background: radial-gradient(circle at center, rgba(255, 255, 255, 0.95) 0%, rgba(255, 215, 0, 0.6) 40%, transparent 80%); }
+  10% { opacity: 0.2; }
+  15% { opacity: 1; background: rgba(255, 255, 255, 0.88); }
+  22% { opacity: 0.15; background: radial-gradient(circle at center, rgba(255, 255, 255, 0.4) 0%, transparent 70%); }
+  35% { opacity: 0.92; background: radial-gradient(circle at center, rgba(255, 215, 0, 0.8) 0%, rgba(0, 255, 102, 0.5) 50%, transparent 90%); }
+  45% { opacity: 0.2; }
+  60% { opacity: 0.95; background: radial-gradient(circle at center, rgba(255, 255, 255, 0.95) 0%, rgba(255, 94, 0, 0.6) 40%, transparent 85%); }
+  70% { opacity: 0.15; }
+  85% { opacity: 0.9; background: radial-gradient(circle at center, rgba(255, 255, 255, 0.8) 0%, rgba(255, 215, 0, 0.6) 60%, transparent 90%); }
+  100% { opacity: 0.1; }
+}
+
+/* Rayos de Luz Giratorios de Fondo */
+.winner-light-rays {
+  position: absolute;
+  width: 250vmax;
+  height: 250vmax;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 5001;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(255, 215, 0, 0.14) 0deg 15deg,
+    transparent 15deg 30deg,
+    rgba(0, 255, 102, 0.12) 30deg 45deg,
+    transparent 45deg 60deg
+  );
+  animation: rotateLightRays 16s infinite linear;
+}
+
+@keyframes rotateLightRays {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
 .confetti-canvas {
@@ -1162,57 +1213,70 @@ body.projector-mode .bingo-cell {
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 5001;
+  z-index: 5002;
 }
 
+/* Tarjeta de Ganador Maximizada (Ocupa el tamaño máximo de pantalla) */
 .winner-card {
   position: relative;
-  z-index: 5002;
-  background: linear-gradient(145deg, #091326, #162447);
-  border: 3px solid #ffd700;
-  border-radius: 20px;
-  padding: clamp(24px, 4.5vh, 48px) clamp(24px, 4.5vw, 60px);
+  z-index: 5003;
+  background: linear-gradient(145deg, rgba(9, 19, 38, 0.96), rgba(16, 32, 65, 0.98));
+  border: clamp(3px, 0.6vmin, 6px) solid #ffd700;
+  border-radius: clamp(16px, 3vmin, 32px);
+  padding: clamp(20px, 4vh, 50px) clamp(20px, 4vw, 60px);
   text-align: center;
-  box-shadow: 0 0 50px rgba(255, 215, 0, 0.6), 0 0 90px rgba(0, 255, 102, 0.4);
-  max-width: 580px;
-  width: 90%;
-  animation: winnerCardPop 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 
+    0 0 60px rgba(255, 215, 0, 0.8),
+    0 0 120px rgba(0, 255, 102, 0.55),
+    inset 0 0 50px rgba(255, 215, 0, 0.3);
+  max-width: 94vw;
+  width: 92vw;
+  max-height: 94vh;
+  min-height: 75vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: winnerCardPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-@keyframes winnerFadeIn {
+@keyframes winnerOverlayFadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
 @keyframes winnerCardPop {
-  0% { transform: scale(0.6) translateY(40px); opacity: 0; }
+  0% { transform: scale(0.5) translateY(50px); opacity: 0; }
   100% { transform: scale(1) translateY(0); opacity: 1; }
 }
 
 .winner-trophy-anim {
-  font-size: clamp(52px, 8vmin, 92px);
-  margin-bottom: 8px;
+  font-size: clamp(80px, 14vmin, 160px);
+  line-height: 1;
+  margin-bottom: clamp(6px, 1.5vh, 16px);
   animation: trophyBounce 1s infinite alternate ease-in-out;
   display: inline-block;
+  filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.95));
 }
 
 @keyframes trophyBounce {
-  0% { transform: translateY(0) scale(1) rotate(-4deg); }
-  100% { transform: translateY(-14px) scale(1.12) rotate(4deg); }
+  0% { transform: translateY(0) scale(1) rotate(-5deg); }
+  100% { transform: translateY(-16px) scale(1.15) rotate(5deg); }
 }
 
 .winner-title {
   font-family: 'Chakra Petch', sans-serif;
-  font-size: clamp(28px, 5.2vmin, 58px);
+  font-size: clamp(38px, 8vmin, 96px);
   font-weight: 900;
-  letter-spacing: 2px;
-  background: linear-gradient(135deg, #fff7ad, #ffa900, #ff5e00, #00ff66);
+  letter-spacing: clamp(2px, 0.4vmin, 6px);
+  background: linear-gradient(135deg, #ffffff 0%, #fff7ad 20%, #ffa900 45%, #ff3366 70%, #00ff66 100%);
   background-size: 300% 300%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: winnerTitleShine 3s infinite linear;
-  margin-bottom: 6px;
-  line-height: 1.1;
+  animation: winnerTitleShine 2.5s infinite linear;
+  margin-bottom: clamp(6px, 1.2vh, 14px);
+  line-height: 1.05;
+  text-shadow: 0 0 35px rgba(255, 215, 0, 0.6);
 }
 
 @keyframes winnerTitleShine {
@@ -1223,44 +1287,89 @@ body.projector-mode .bingo-cell {
 
 .winner-subtitle {
   font-family: 'Chakra Petch', sans-serif;
-  font-size: clamp(14px, 2.2vmin, 24px);
-  font-weight: 800;
+  font-size: clamp(18px, 3.6vmin, 44px);
+  font-weight: 900;
   color: #00ff66;
-  text-shadow: 0 0 16px rgba(0, 255, 102, 0.8);
-  letter-spacing: 1.5px;
-  margin-bottom: 12px;
+  text-shadow: 0 0 20px rgba(0, 255, 102, 0.9), 0 0 45px rgba(0, 255, 102, 0.6);
+  letter-spacing: clamp(1px, 0.2vmin, 3px);
+  margin-bottom: clamp(10px, 2vh, 22px);
+  text-transform: uppercase;
 }
 
 .winner-badge-congrats {
   display: inline-block;
-  background: rgba(255, 215, 0, 0.15);
-  border: 1px solid #ffd700;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.25), rgba(0, 255, 102, 0.2));
+  border: clamp(2px, 0.3vmin, 3px) solid #ffd700;
   color: #ffd700;
-  padding: 6px 18px;
-  border-radius: 30px;
-  font-size: clamp(12px, 1.6vmin, 18px);
+  padding: clamp(8px, 1.4vh, 16px) clamp(20px, 3.5vw, 48px);
+  border-radius: 40px;
+  font-size: clamp(15px, 2.8vmin, 34px);
   font-weight: 900;
-  letter-spacing: 1px;
-  margin-bottom: 20px;
+  letter-spacing: clamp(1px, 0.2vmin, 2.5px);
+  margin-bottom: clamp(12px, 2.2vh, 26px);
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
+  animation: badgeGlowPulse 1.5s infinite alternate ease-in-out;
+}
+
+@keyframes badgeGlowPulse {
+  0% { transform: scale(0.98); box-shadow: 0 0 15px rgba(255, 215, 0, 0.4); }
+  100% { transform: scale(1.02); box-shadow: 0 0 40px rgba(255, 215, 0, 0.85), 0 0 60px rgba(0, 255, 102, 0.6); }
+}
+
+.winner-actions-box {
+  margin-top: 4px;
 }
 
 .btn-winner-close {
   background: linear-gradient(135deg, #ffd700, #ff9900);
   color: #000000;
   border: none;
-  border-radius: 10px;
-  padding: 10px 24px;
+  border-radius: 12px;
+  padding: clamp(10px, 1.6vh, 16px) clamp(24px, 3vw, 40px);
   font-family: 'Outfit', sans-serif;
-  font-size: clamp(12px, 1.6vmin, 16px);
+  font-size: clamp(13px, 1.8vmin, 18px);
   font-weight: 900;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.7);
 }
 
 .btn-winner-close:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 25px rgba(255, 215, 0, 0.9);
+  transform: scale(1.06);
+  box-shadow: 0 0 35px rgba(255, 215, 0, 1);
+}
+
+/* En Modo Segunda Pantalla (Proyector/Pantalla Extendida):
+   - Ocultar COMPLETAMENTE el botón "Cerrar"
+   - Maximizar aún más el tamaño de la tarjeta para llenar la pantalla gigante */
+body.projector-mode .btn-winner-close,
+body.projector-mode .winner-actions-box {
+  display: none !important;
+}
+
+body.projector-mode .winner-card {
+  max-width: 96vw;
+  width: 95vw;
+  max-height: 96vh;
+  min-height: 85vh;
+  padding: clamp(24px, 5vh, 60px) clamp(24px, 5vw, 70px);
+}
+
+body.projector-mode .winner-trophy-anim {
+  font-size: clamp(100px, 18vmin, 200px);
+}
+
+body.projector-mode .winner-title {
+  font-size: clamp(48px, 10vmin, 120px);
+}
+
+body.projector-mode .winner-subtitle {
+  font-size: clamp(24px, 4.5vmin, 55px);
+}
+
+body.projector-mode .winner-badge-congrats {
+  font-size: clamp(20px, 3.5vmin, 42px);
+  padding: clamp(12px, 2vh, 24px) clamp(28px, 4.5vw, 60px);
 }
 
 /* ==========================================================================
