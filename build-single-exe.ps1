@@ -1,8 +1,14 @@
 # Script para compilar BingHo a un único archivo ejecutable portable .EXE con icono y metadatos completos
 $ErrorActionPreference = "Stop"
 
+# Cerrar cualquier instancia previa en ejecución para liberar archivos
+Stop-Process -Name "BingHo" -Force -ErrorAction SilentlyContinue
+Stop-Process -Name "electron" -Force -ErrorAction SilentlyContinue
+Start-Sleep -Milliseconds 500
+
 Write-Host ">>> Paso 1: Generando empaquetado base de Electron (BingHo)..." -ForegroundColor Cyan
 & "C:\Program Files\nodejs\npm.cmd" run package:win
+Start-Sleep -Seconds 1
 
 $pkg = Get-Content "package.json" -Raw | ConvertFrom-Json
 $appVersion = $pkg.version

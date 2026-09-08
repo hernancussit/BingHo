@@ -1,8 +1,53 @@
-const { app, BrowserWindow, globalShortcut, ipcMain, Menu, screen } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, Menu, screen, shell } = require('electron');
 const path = require('path');
+const https = require('https');
+const packageJson = require('./package.json');
 
 let mainWindow = null;
 let projectorWindow = null;
+
+function fetchLatestRelease() {
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname: 'api.github.com',
+      path: '/repos/hernancussit/BingHo/releases/latest',
+      headers: {
+        'User-Agent': 'BingHo-Desktop-App'
+      }
+    };
+
+    https.get(options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          try {
+            resolve(JSON.parse(data));
+          } catch (e) {
+            reject(e);
+          }
+        } else {
+          reject(new Error(`GitHub API status ${res.statusCode}`));
+        }
+      });
+    }).on('error', (err) => {
+      reject(err);
+    });
+  });
+}
+
+function compareVersions(v1, v2) {
+  const clean = (v) => v.replace(/^v/, '').split('-')[0].split('.').map(n => parseInt(n, 10) || 0);
+  const p1 = clean(v1);
+  const p2 = clean(v2);
+  for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
+    const num1 = p1[i] || 0;
+    const num2 = p2[i] || 0;
+    if (num1 > num2) return 1;
+    if (num1 < num2) return -1;
+  }
+  return 0;
+}
 
 function createWindow() {
   const primaryDisplay = screen ? screen.getPrimaryDisplay() : null;
@@ -218,6 +263,52 @@ ipcMain.on('sync-projector-event', (event, eventData) => {
   if (projectorWindow && !projectorWindow.isDestroyed() && event.sender !== projectorWindow.webContents) {
     projectorWindow.webContents.send('projector-event-received', eventData);
   }
+});
+
+// Comprobación de actualizaciones vía GitHub Releases
+ipcMain.handle('check-for-updates', async () => {
+  try {
+    const release = await fetchLatestRelease();
+    const currentVer = packageJson.version;
+    const latestTag = release.tag_name || release.name || '';
+    const cleanLatest = latestTag.replace(/^v/, '');
+    
+    const isNewer = compareVersions(cleanLatest, currentVer) > 0;
+    
+    let downloadUrl = release.html_url;
+    if (Array.isArray(release.assets)) {
+      const exeAsset = release.assets.find(a => a.name && a.name.endsWith('.exe'));
+      if (exeAsset) {
+        downloadUrl = exeAsset.browser_download_url;
+      }
+    }
+
+    return {
+      success: true,
+      hasUpdate: isNewer,
+      currentVersion: currentVer,
+      latestVersion: cleanLatest,
+      latestTag: latestTag,
+      releaseTitle: release.name || latestTag,
+      releaseNotes: release.body || 'Nuevas mejoras y correcciones disponibles.',
+      downloadUrl: downloadUrl,
+      releaseUrl: release.html_url
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err.message,
+      currentVersion: packageJson.version
+    };
+  }
+});
+
+ipcMain.handle('open-external-url', async (_event, url) => {
+  if (url && (url.startsWith('https://') || url.startsWith('http://'))) {
+    await shell.openExternal(url);
+    return true;
+  }
+  return false;
 });
 
 ipcMain.handle('quit-app', () => {

@@ -113,11 +113,15 @@
         <div class="input-hint" id="inputHint">Presione [Enter]</div>
       </div>
 
-      <!-- Botón Gigante Toggle BINGO! -->
+      <!-- Botón Gigante Toggle BINGO! & Cartón Ganador -->
       <div class="control-group">
         <button id="btnBingoToggle" class="btn-bingo" aria-pressed="false" title="Alternar Modo Auditoría BINGO (Ctrl+B)">
           <span class="bingo-btn-text">BINGO!</span>
           <span class="bingo-btn-status" id="bingoStatusText">SORTEO</span>
+        </button>
+        <button id="btnWinnerCelebration" class="btn-winner-celebration" disabled title="Informar cartón correcto y festejar ganador (Ctrl+W)">
+          <span class="winner-btn-icon">🏆</span>
+          <span class="winner-btn-text">¡CARTÓN GANADOR!</span>
         </button>
       </div>
 
@@ -183,6 +187,10 @@
           🖥️ <span id="projectorBtnText">Segunda Pantalla</span>
         </button>
 
+        <button id="btnCheckUpdates" class="btn-system" title="Buscar nuevas actualizaciones en GitHub">
+          🔄 <span id="updateBtnText">Buscar Actualización</span>
+        </button>
+
         <button id="btnFullscreen" class="btn-system" title="Alternar Pantalla Completa (F11)">
           ⛶ <span id="fullscreenText">Pantalla Completa</span>
         </button>
@@ -197,11 +205,27 @@
       </div>
 
       <div class="panel-hint-footer">
-        F11: Fullscreen | F10: 2da Pantalla | Ctrl+B: Bingo
+        F11: Fullscreen | F10: 2da Pantalla | Ctrl+B: Bingo | Ctrl+W: Ganador
       </div>
 
     </aside>
 
+  </div>
+
+  <!-- =================================================================
+       SUPERPOSICIÓN DE CELEBRACIÓN DE CARTÓN GANADOR (CONFETI & FESTEJO)
+       ================================================================= -->
+  <div class="winner-overlay" id="winnerOverlay" style="display: none;">
+    <canvas id="confettiCanvas" class="confetti-canvas"></canvas>
+    <div class="winner-card">
+      <div class="winner-trophy-anim">🏆</div>
+      <h1 class="winner-title">¡BINGO GANADOR!</h1>
+      <div class="winner-subtitle" id="winnerSubtitle">¡CARTÓN AUDITADO Y VÁLIDO!</div>
+      <div class="winner-badge-congrats">🎉 ¡FELICITACIONES! 🎉</div>
+      <div>
+        <button class="btn-winner-close" id="btnCloseWinner">Continuar / Cerrar ✕</button>
+      </div>
+    </div>
   </div>
 
   <!-- =================================================================
@@ -215,6 +239,22 @@
       <div class="modal-actions">
         <button class="btn-modal-secondary" id="btnCancelReset">Cancelar</button>
         <button class="btn-modal-danger" id="btnConfirmReset">Sí, Reiniciar Todo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================================================================
+       MODAL DE ACTUALIZACIÓN DESDE GITHUB
+       ================================================================= -->
+  <div class="modal-overlay" id="updateModalOverlay">
+    <div class="modal-box">
+      <div class="modal-icon" id="updateModalIcon">🚀</div>
+      <h3 class="modal-title" id="updateModalTitle">Actualización Disponible</h3>
+      <p class="modal-desc" id="updateModalDesc">Comprobando versiones en GitHub...</p>
+      <div class="update-notes-box" id="updateNotesBox" style="display: none;"></div>
+      <div class="modal-actions">
+        <button class="btn-modal-secondary" id="btnCancelUpdate">Cerrar</button>
+        <button class="btn-modal-danger" id="btnDownloadUpdate" style="display: none; background: #10b981;">⬇️ Descargar Actualización</button>
       </div>
     </div>
   </div>

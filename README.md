@@ -10,11 +10,15 @@ Aplicación para la gestión, control y proyección en vivo de tableros de Bingo
 
 - **Tablero de Alta Visibilidad**: Grilla completa del 1 al 90 maximizada en pantalla para una lectura nítida a larga distancia.
 - **Ajuste de Escala de Fuente (60% - 130%)**: Control deslizante para calibrar en tiempo real el tamaño de los números y adaptarlo a cualquier resolución o relación de aspecto de pantalla.
-- **Modo Auditoría BINGO en Vivo**:
+- **Modo Auditoría BINGO y Festejo de Cartón Ganador**:
   - Validación visual inmediata de cartones ganadores.
   - Los números correctos se destacan en **verde con zoom**.
   - Los números no cantados alertan en **rojo**.
   - Los números auditados permanecen resaltados hasta finalizar la revisión.
+  - **Botón ¡CARTÓN GANADOR!**: Despliega una animación de confeti en Canvas a 60 FPS, fanfarria triunfal y cartel de felicitaciones visible simultáneamente en la pantalla del operador y en el proyector/pantalla LED (`Ctrl + W`).
+- **Actualizador Integrado desde GitHub**:
+  - Comprobación de nuevas versiones con un clic o al inicio.
+  - Descarga directa de la última versión desde GitHub Releases.
 - **Información del Sorteo en Vivo**:
   - Panel con el último número cantado en tamaño gigante.
   - Historial vertical de los últimos números salidos en orden cronológico.
@@ -26,7 +30,7 @@ Aplicación para la gestión, control y proyección en vivo de tableros de Bingo
 - **Temas Visuales**:
   - **Clásico**: Azul marino y amarillo de alto impacto.
   - **Alto Contraste**: Fondo negro absoluto con cian y blanco.
-  - **Luz de Día**: Fondo claro para proyecciones en ambientes iluminados.
+  - **Luz de Día**: Fondo claro con azul rey profundo, diseñado para evitar cualquier solapamiento de colores con el verde y rojo de auditoría.
 - **Protección del Tablero**: Las celdas del tablero central están bloqueadas a clics directos para evitar modificaciones accidentales.
 - **Persistencia Automática (Anti-Cierre)**: El estado del sorteo y los números cantados se guardan continuamente; si la aplicación se cierra por accidente, se reanuda exactamente donde quedó.
 - **Efectos de Sonido**: Tonos sintetizados para el sorteo y la auditoría (con opción de silencio).
@@ -47,7 +51,8 @@ Aplicación para la gestión, control y proyección en vivo de tableros de Bingo
 | `[F10]` | Abrir / Cerrar Modo Segunda Pantalla (Proyector) |
 | `[F11]` | Alternar Pantalla Completa |
 | `[Ctrl + B]` | Entrar / Salir del Modo Auditoría BINGO |
-| `[Esc]` | Cerrar cuadros de confirmación |
+| `[Ctrl + W]` | Festejo de Cartón Ganador (en Modo Auditoría) |
+| `[Esc]` | Cerrar cuadros de diálogo o superposición de ganador |
 
 ---
 

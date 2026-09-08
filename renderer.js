@@ -2,6 +2,8 @@
  * BingHo - RENDERER & STATE LOGIC
  * Modo Doble Pantalla (Operador + Proyector Maximizado en Pantalla Extendida),
  * Persistencia Total (Anti-Crash), Modo Auditoría con Zoom Verde/Rojo,
+ * Botón de Cartón Ganador con Festejo y Confeti Sincronizado,
+ * Actualizador Integrado desde GitHub Releases,
  * Control Deslizante de Tamaño de Fuente (60%-130%), Corrección Inline y Tablero Bloqueado.
  */
 
@@ -37,6 +39,7 @@ const DOM = {
   btnSubmitNumber: document.getElementById('btnSubmitNumber'),
   btnBingoToggle: document.getElementById('btnBingoToggle'),
   bingoStatusText: document.getElementById('bingoStatusText'),
+  btnWinnerCelebration: document.getElementById('btnWinnerCelebration'),
   drawTitleInput: document.getElementById('drawTitleInput'),
   drawTitleDisplay: document.getElementById('drawTitleDisplay'),
   statCounter: document.getElementById('statCounter'),
@@ -62,6 +65,8 @@ const DOM = {
   // Acciones y Herramientas del Sistema
   btnProjectorToggle: document.getElementById('btnProjectorToggle'),
   projectorBtnText: document.getElementById('projectorBtnText'),
+  btnCheckUpdates: document.getElementById('btnCheckUpdates'),
+  updateBtnText: document.getElementById('updateBtnText'),
   btnFullscreen: document.getElementById('btnFullscreen'),
   fullscreenText: document.getElementById('fullscreenText'),
   btnSoundToggle: document.getElementById('btnSoundToggle'),
@@ -73,8 +78,25 @@ const DOM = {
   // Modal de Confirmación de Nuevo Sorteo
   confirmModalOverlay: document.getElementById('confirmModalOverlay'),
   btnCancelReset: document.getElementById('btnCancelReset'),
-  btnConfirmReset: document.getElementById('btnConfirmReset')
+  btnConfirmReset: document.getElementById('btnConfirmReset'),
+
+  // Superposición de Celebración de Ganador
+  winnerOverlay: document.getElementById('winnerOverlay'),
+  confettiCanvas: document.getElementById('confettiCanvas'),
+  winnerSubtitle: document.getElementById('winnerSubtitle'),
+  btnCloseWinner: document.getElementById('btnCloseWinner'),
+
+  // Modal de Actualizaciones desde GitHub
+  updateModalOverlay: document.getElementById('updateModalOverlay'),
+  updateModalIcon: document.getElementById('updateModalIcon'),
+  updateModalTitle: document.getElementById('updateModalTitle'),
+  updateModalDesc: document.getElementById('updateModalDesc'),
+  updateNotesBox: document.getElementById('updateNotesBox'),
+  btnCancelUpdate: document.getElementById('btnCancelUpdate'),
+  btnDownloadUpdate: document.getElementById('btnDownloadUpdate')
 };
+
+let updateDownloadUrl = '';
 
 // ==========================================================================
 // 3. SINCRONIZACIÓN OPERADOR <-> PROYECTOR
@@ -131,11 +153,15 @@ function applyExternalState(payload) {
         DOM.bingoStatusText.textContent = 'SORTEO';
       }
     }
+    if (DOM.btnWinnerCelebration) {
+      DOM.btnWinnerCelebration.disabled = !state.isBingoMode;
+    }
     if (!state.isBingoMode) {
       document.querySelectorAll('.cell-audit-valid, .cell-audit-invalid').forEach(c => {
         c.classList.remove('cell-audit-valid', 'cell-audit-invalid');
       });
       if (DOM.auditToast) DOM.auditToast.style.display = 'none';
+      hideWinnerCelebration(false);
     }
   }
 
@@ -185,6 +211,10 @@ function applyExternalEvent(eventType, eventData = {}) {
       }
       showAuditToast(false, `N° ${String(num).padStart(2, '0')} NO SALIÓ`, `Número NO cantado en sorteo`);
     }
+  } else if (eventType === 'winner-celebration') {
+    showWinnerCelebration(false);
+  } else if (eventType === 'hide-winner-celebration') {
+    hideWinnerCelebration(false);
   } else if (eventType === 'game-reset') {
     resetBoardUIOnly();
   }
@@ -330,8 +360,160 @@ function playAuditInvalidSound() {
   playTone(175, 'sawtooth', 0.3, 0.15);
 }
 
+function playVictoryFanfare() {
+  if (isProjectorMode || !state.soundEnabled) return;
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    
+    const notes = [
+      { freq: 523.25, time: 0, dur: 0.14 },    // C5
+      { freq: 659.25, time: 0.11, dur: 0.14 }, // E5
+      { freq: 783.99, time: 0.22, dur: 0.18 }, // G5
+      { freq: 1046.50, time: 0.36, dur: 0.65 } // C6
+    ];
+
+    notes.forEach(n => {
+      setTimeout(() => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(n.freq, ctx.currentTime);
+        gain.gain.setValueAtTime(0.28, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + n.dur);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + n.dur);
+      }, n.time * 1000);
+    });
+  } catch (e) {}
+}
+
 // ==========================================================================
-// 6. INICIALIZACIÓN Y RENDERIZADO DEL TABLERO
+// 6. MOTOR DE CONFETI EN CANVAS (60 FPS)
+// ==========================================================================
+
+let confettiAnimId = null;
+let confettiParticles = [];
+
+class ConfettiParticle {
+  constructor(w, h) {
+    this.w = w;
+    this.h = h;
+    this.reset();
+  }
+
+  reset() {
+    this.x = Math.random() * this.w;
+    this.y = -20 - Math.random() * 60;
+    this.size = Math.random() * 8 + 6;
+    this.speedY = Math.random() * 3.5 + 2.5;
+    this.speedX = Math.random() * 3 - 1.5;
+    this.rotation = Math.random() * 360;
+    this.rotSpeed = Math.random() * 8 - 4;
+    this.colors = ['#ffd700', '#ff9900', '#00ff66', '#00d2ff', '#ff3366', '#ffffff', '#e040fb'];
+    this.color = this.colors[Math.floor(Math.random() * this.colors.length)];
+    this.shape = Math.random() > 0.35 ? 'rect' : 'circle';
+  }
+
+  update() {
+    this.y += this.speedY;
+    this.x += this.speedX + Math.sin(this.y / 25) * 0.8;
+    this.rotation += this.rotSpeed;
+
+    if (this.y > this.h + 20) {
+      this.reset();
+    }
+  }
+
+  draw(ctx) {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate((this.rotation * Math.PI) / 180);
+    ctx.fillStyle = this.color;
+    ctx.shadowBlur = 4;
+    ctx.shadowColor = this.color;
+
+    if (this.shape === 'rect') {
+      ctx.fillRect(-this.size / 2, -this.size / 4, this.size, this.size / 2);
+    } else {
+      ctx.beginPath();
+      ctx.arc(0, 0, this.size / 2.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+function startConfetti() {
+  if (!DOM.confettiCanvas) return;
+  const canvas = DOM.confettiCanvas;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  confettiParticles = [];
+  const count = window.innerWidth > 1000 ? 140 : 80;
+  for (let i = 0; i < count; i++) {
+    confettiParticles.push(new ConfettiParticle(canvas.width, canvas.height));
+  }
+
+  if (confettiAnimId) cancelAnimationFrame(confettiAnimId);
+
+  function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    confettiParticles.forEach(p => {
+      p.update();
+      p.draw(ctx);
+    });
+    confettiAnimId = requestAnimationFrame(loop);
+  }
+
+  loop();
+}
+
+function stopConfetti() {
+  if (confettiAnimId) {
+    cancelAnimationFrame(confettiAnimId);
+    confettiAnimId = null;
+  }
+  if (DOM.confettiCanvas) {
+    const ctx = DOM.confettiCanvas.getContext('2d');
+    if (ctx) ctx.clearRect(0, 0, DOM.confettiCanvas.width, DOM.confettiCanvas.height);
+  }
+}
+
+function showWinnerCelebration(shouldBroadcast = true) {
+  if (!DOM.winnerOverlay) return;
+  DOM.winnerOverlay.style.display = 'flex';
+  DOM.winnerOverlay.classList.add('show');
+  startConfetti();
+  playVictoryFanfare();
+
+  if (shouldBroadcast) {
+    broadcastEvent('winner-celebration', {});
+  }
+}
+
+function hideWinnerCelebration(shouldBroadcast = true) {
+  if (!DOM.winnerOverlay) return;
+  DOM.winnerOverlay.classList.remove('show');
+  DOM.winnerOverlay.style.display = 'none';
+  stopConfetti();
+
+  if (shouldBroadcast) {
+    broadcastEvent('hide-winner-celebration', {});
+  }
+  if (!isProjectorMode) {
+    refocusInput();
+  }
+}
+
+// ==========================================================================
+// 7. INICIALIZACIÓN Y RENDERIZADO DEL TABLERO
 // ==========================================================================
 
 function initBoard() {
@@ -378,7 +560,7 @@ function refreshBoardFromState() {
 }
 
 // ==========================================================================
-// 7. LÓGICA DE SORTEO Y ENTRADA DE NÚMEROS
+// 8. LÓGICA DE SORTEO Y ENTRADA DE NÚMEROS
 // ==========================================================================
 
 function handleNumberSubmit() {
@@ -458,7 +640,7 @@ function highlightCell(num) {
 }
 
 // ==========================================================================
-// 8. CORRECCIÓN DE ERRORES INLINE (SIN MODAL INTERRUPTIVO)
+// 9. CORRECCIÓN DE ERRORES INLINE (SIN MODAL INTERRUPTIVO)
 // ==========================================================================
 
 function handleInlineRemoveNumber() {
@@ -539,7 +721,7 @@ function undoLastNumber() {
 }
 
 // ==========================================================================
-// 9. MODO BINGO (AUDITORÍA PERSISTENTE CON ZOOM VERDE / ROJO)
+// 10. MODO BINGO (AUDITORÍA PERSISTENTE CON ZOOM VERDE / ROJO)
 // ==========================================================================
 
 function toggleBingoMode() {
@@ -552,6 +734,9 @@ function toggleBingoMode() {
       DOM.btnBingoToggle.setAttribute('aria-pressed', 'true');
       DOM.bingoStatusText.textContent = '● AUDITORÍA';
     }
+    if (DOM.btnWinnerCelebration) {
+      DOM.btnWinnerCelebration.disabled = false;
+    }
     if (DOM.auditStatusBadge) DOM.auditStatusBadge.style.display = 'flex';
     if (DOM.inputLabel) DOM.inputLabel.textContent = 'AUDITAR N°';
     if (DOM.inputHint) DOM.inputHint.textContent = 'Ingrese N° para auditar en cartón';
@@ -562,6 +747,9 @@ function toggleBingoMode() {
       DOM.btnBingoToggle.setAttribute('aria-pressed', 'false');
       DOM.bingoStatusText.textContent = 'SORTEO';
     }
+    if (DOM.btnWinnerCelebration) {
+      DOM.btnWinnerCelebration.disabled = true;
+    }
     if (DOM.auditStatusBadge) DOM.auditStatusBadge.style.display = 'none';
     if (DOM.inputLabel) DOM.inputLabel.textContent = 'NÚMERO (1-90)';
     if (DOM.inputHint) DOM.inputHint.textContent = 'Presione [Enter]';
@@ -571,6 +759,8 @@ function toggleBingoMode() {
     document.querySelectorAll('.cell-audit-valid, .cell-audit-invalid').forEach(c => {
       c.classList.remove('cell-audit-valid', 'cell-audit-invalid');
     });
+
+    hideWinnerCelebration(true);
   }
 
   broadcastState();
@@ -621,7 +811,7 @@ function showAuditToast(isValid, title, desc) {
 }
 
 // ==========================================================================
-// 10. GESTIÓN DE TEMAS, PANTALLA COMPLETA & SEGUNDA PANTALLA
+// 11. GESTIÓN DE TEMAS, PANTALLA COMPLETA & SEGUNDA PANTALLA
 // ==========================================================================
 
 function setTheme(themeName, shouldBroadcast = true) {
@@ -688,7 +878,67 @@ function updateSoundButtonUI() {
 }
 
 // ==========================================================================
-// 11. REINICIO DE SORTEO (NUEVO SORTEO)
+// 12. ACTUALIZADOR DESDE GITHUB RELEASES
+// ==========================================================================
+
+async function checkAppUpdates(isManual = false) {
+  if (!window.electronAPI || !window.electronAPI.checkForUpdates) {
+    if (isManual) alert('Actualizador no disponible en este entorno.');
+    return;
+  }
+
+  if (isManual) {
+    DOM.updateModalOverlay.classList.add('show');
+    DOM.updateModalIcon.textContent = '🔄';
+    DOM.updateModalTitle.textContent = 'Comprobando actualizaciones...';
+    DOM.updateModalDesc.textContent = 'Consultando el repositorio de BingHo en GitHub...';
+    DOM.updateNotesBox.style.display = 'none';
+    DOM.btnDownloadUpdate.style.display = 'none';
+  }
+
+  try {
+    const res = await window.electronAPI.checkForUpdates();
+    if (res.success) {
+      if (res.hasUpdate) {
+        updateDownloadUrl = res.downloadUrl || res.releaseUrl;
+        DOM.updateModalOverlay.classList.add('show');
+        DOM.updateModalIcon.textContent = '🚀';
+        DOM.updateModalTitle.innerHTML = `¡Nueva Versión Disponible! <span class="update-badge-new">${res.latestTag}</span>`;
+        DOM.updateModalDesc.innerHTML = `Tienes instalada la versión <b>v${res.currentVersion}</b> y la versión <b>${res.latestTag}</b> ya está lista para descargar.`;
+        if (res.releaseNotes) {
+          DOM.updateNotesBox.textContent = res.releaseNotes;
+          DOM.updateNotesBox.style.display = 'block';
+        }
+        DOM.btnDownloadUpdate.style.display = 'inline-block';
+        if (DOM.updateBtnText) {
+          DOM.updateBtnText.textContent = `Actualizar (${res.latestTag})`;
+          DOM.btnCheckUpdates.classList.add('active');
+        }
+      } else if (isManual) {
+        DOM.updateModalIcon.textContent = '✅';
+        DOM.updateModalTitle.textContent = '¡Tienes la última versión!';
+        DOM.updateModalDesc.innerHTML = `Estás ejecutando <b>v${res.currentVersion}</b>, que es la versión más reciente disponible.`;
+        DOM.updateNotesBox.style.display = 'none';
+        DOM.btnDownloadUpdate.style.display = 'none';
+      }
+    } else if (isManual) {
+      DOM.updateModalIcon.textContent = '⚠️';
+      DOM.updateModalTitle.textContent = 'No se pudo comprobar';
+      DOM.updateModalDesc.textContent = `Error al conectar con GitHub: ${res.error || 'Verifica tu conexión a internet.'}`;
+      DOM.updateNotesBox.style.display = 'none';
+      DOM.btnDownloadUpdate.style.display = 'none';
+    }
+  } catch (e) {
+    if (isManual) {
+      DOM.updateModalIcon.textContent = '⚠️';
+      DOM.updateModalTitle.textContent = 'Error';
+      DOM.updateModalDesc.textContent = 'Ocurrió un error al buscar actualizaciones.';
+    }
+  }
+}
+
+// ==========================================================================
+// 13. REINICIO DE SORTEO (NUEVO SORTEO)
 // ==========================================================================
 
 function showResetConfirmation() {
@@ -709,6 +959,7 @@ function resetBoardUIOnly() {
   DOM.currentNumberDisplay.textContent = '--';
   if (DOM.auditToast) DOM.auditToast.style.display = 'none';
   if (DOM.auditStatusBadge) DOM.auditStatusBadge.style.display = 'none';
+  hideWinnerCelebration(false);
   updateStats();
   updateHistory();
 }
@@ -735,7 +986,7 @@ function resetGame() {
 }
 
 // ==========================================================================
-// 12. ACTUALIZACIÓN DE ESTADÍSTICAS E HISTORIAL
+// 14. ACTUALIZACIÓN DE ESTADÍSTICAS E HISTORIAL
 // ==========================================================================
 
 function updateStats() {
@@ -766,7 +1017,12 @@ function updateHistory() {
 function refocusInput() {
   if (isProjectorMode) return;
   setTimeout(() => {
-    if (DOM.confirmModalOverlay && !DOM.confirmModalOverlay.classList.contains('show') && DOM.numberInput) {
+    if (
+      DOM.confirmModalOverlay && !DOM.confirmModalOverlay.classList.contains('show') &&
+      DOM.winnerOverlay && !DOM.winnerOverlay.classList.contains('show') &&
+      DOM.updateModalOverlay && !DOM.updateModalOverlay.classList.contains('show') &&
+      DOM.numberInput
+    ) {
       DOM.numberInput.focus();
     }
   }, 40);
@@ -783,7 +1039,7 @@ function showInputShake(element) {
 }
 
 // ==========================================================================
-// 13. EVENT LISTENERS
+// 15. EVENT LISTENERS
 // ==========================================================================
 
 if (!isProjectorMode) {
@@ -835,6 +1091,15 @@ if (!isProjectorMode) {
   // Toggle BINGO!
   if (DOM.btnBingoToggle) DOM.btnBingoToggle.addEventListener('click', toggleBingoMode);
 
+  // Botón ¡CARTÓN GANADOR!
+  if (DOM.btnWinnerCelebration) {
+    DOM.btnWinnerCelebration.addEventListener('click', () => {
+      if (state.isBingoMode) {
+        showWinnerCelebration(true);
+      }
+    });
+  }
+
   // Selector de Temas
   if (DOM.themeButtons) {
     DOM.themeButtons.forEach(btn => {
@@ -848,6 +1113,27 @@ if (!isProjectorMode) {
   // Botón Segunda Pantalla (Proyector)
   if (DOM.btnProjectorToggle) {
     DOM.btnProjectorToggle.addEventListener('click', toggleProjector);
+  }
+
+  // Botón Buscar Actualizaciones
+  if (DOM.btnCheckUpdates) {
+    DOM.btnCheckUpdates.addEventListener('click', () => checkAppUpdates(true));
+  }
+
+  // Modal de Actualizaciones
+  if (DOM.btnCancelUpdate) {
+    DOM.btnCancelUpdate.addEventListener('click', () => {
+      DOM.updateModalOverlay.classList.remove('show');
+      refocusInput();
+    });
+  }
+
+  if (DOM.btnDownloadUpdate) {
+    DOM.btnDownloadUpdate.addEventListener('click', () => {
+      if (updateDownloadUrl && window.electronAPI && window.electronAPI.openExternalUrl) {
+        window.electronAPI.openExternalUrl(updateDownloadUrl);
+      }
+    });
   }
 
   // Pantalla Completa
@@ -869,6 +1155,26 @@ if (!isProjectorMode) {
   if (DOM.btnConfirmReset) DOM.btnConfirmReset.addEventListener('click', resetGame);
 }
 
+// Botón de cerrar overlay de ganador (tanto en operador como en proyector)
+if (DOM.btnCloseWinner) {
+  DOM.btnCloseWinner.addEventListener('click', () => hideWinnerCelebration(true));
+}
+if (DOM.winnerOverlay) {
+  DOM.winnerOverlay.addEventListener('click', (e) => {
+    if (e.target === DOM.winnerOverlay || e.target === DOM.confettiCanvas) {
+      hideWinnerCelebration(true);
+    }
+  });
+}
+
+// Redimensionar canvas de confeti al cambiar tamaño de ventana
+window.addEventListener('resize', () => {
+  if (DOM.confettiCanvas && DOM.winnerOverlay.classList.contains('show')) {
+    DOM.confettiCanvas.width = window.innerWidth;
+    DOM.confettiCanvas.height = window.innerHeight;
+  }
+});
+
 // Atajos Globales de Teclado
 window.addEventListener('keydown', (e) => {
   if (e.key === 'F11') {
@@ -882,8 +1188,18 @@ window.addEventListener('keydown', (e) => {
   }
   
   if (e.key === 'Escape') {
+    if (DOM.winnerOverlay && DOM.winnerOverlay.classList.contains('show')) {
+      hideWinnerCelebration(true);
+      return;
+    }
     if (DOM.confirmModalOverlay && DOM.confirmModalOverlay.classList.contains('show')) {
       hideResetConfirmation();
+      return;
+    }
+    if (DOM.updateModalOverlay && DOM.updateModalOverlay.classList.contains('show')) {
+      DOM.updateModalOverlay.classList.remove('show');
+      refocusInput();
+      return;
     }
   }
 
@@ -892,10 +1208,18 @@ window.addEventListener('keydown', (e) => {
     e.preventDefault();
     toggleBingoMode();
   }
+
+  // Ctrl+W o Alt+W para festejo de cartón ganador (solo si está en modo auditoría)
+  if (!isProjectorMode && (e.ctrlKey || e.altKey) && (e.key === 'w' || e.key === 'W')) {
+    if (state.isBingoMode) {
+      e.preventDefault();
+      showWinnerCelebration(true);
+    }
+  }
 });
 
 // ==========================================================================
-// 14. INICIO Y ESCUCHA DE SINCRONIZACIÓN
+// 16. INICIO Y ESCUCHA DE SINCRONIZACIÓN
 // ==========================================================================
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -936,8 +1260,12 @@ window.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-  // Si no es proyector, desbloquear audio en el primer clic/tecla
+  // Comprobar actualizaciones silenciosamente al inicio en modo operador
   if (!isProjectorMode) {
+    setTimeout(() => {
+      checkAppUpdates(false);
+    }, 2500);
+
     const unlockAudio = () => {
       getAudioContext();
       window.removeEventListener('click', unlockAudio);
@@ -947,4 +1275,5 @@ window.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('keydown', unlockAudio);
   }
 });
+
 

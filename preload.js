@@ -25,6 +25,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   sendEventSync: (eventData) => ipcRenderer.send('sync-projector-event', eventData),
   onEventSync: (callback) => {
     ipcRenderer.on('projector-event-received', (_event, eventData) => callback(eventData));
-  }
+  },
+
+  // Actualizador desde GitHub
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  openExternalUrl: (url) => ipcRenderer.invoke('open-external-url', url)
 });
 
