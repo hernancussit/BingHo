@@ -221,8 +221,10 @@ if (Test-Path $portableExe) {
     Remove-Item $zipPath -Force -ErrorAction SilentlyContinue
     Remove-Item $sourceFile -Force -ErrorAction SilentlyContinue
     
-    # Crear también el paquete comprimido .ZIP para descargas limpias
-    if (Test-Path $releaseZip) { Remove-Item $releaseZip -Force }
+    # Mantener solo la última build en dist: eliminar zips de builds anteriores para ahorrar espacio en disco
+    Get-ChildItem -Path "dist" -Filter "BingHo-v*.zip" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+
+    # Crear el paquete comprimido .ZIP para descargas de la última build
     Compress-Archive -Path $portableExe -DestinationPath $releaseZip -Force
     
     $sizeMb = [Math]::Round(((Get-Item $portableExe).Length / 1MB), 2)

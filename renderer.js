@@ -828,6 +828,7 @@ function hideWinnerCelebration(shouldBroadcast = true) {
 // ==========================================================================
 
 function initBoard() {
+  if (!DOM.bingoBoard) return;
   DOM.bingoBoard.innerHTML = '';
   
   for (let i = 1; i <= 90; i++) {
@@ -1805,7 +1806,7 @@ window.addEventListener('DOMContentLoaded', () => {
       if (msg.type === 'state-sync') {
         applyExternalState(msg.payload);
       } else if (msg.type === 'event-sync') {
-        applyExternalEvent(msg.eventType, msg.data);
+        applyExternalEvent(msg.eventType, msg.eventData || msg.data);
       }
     };
   }
