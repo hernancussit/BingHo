@@ -402,11 +402,20 @@ ipcMain.handle('check-for-updates', async () => {
         }
       }
 
-      // Comparar timestamp de publicación de GitHub vs build local
-      if (!isNewer && release.published_at && currentBuildTime > 0) {
-        const releaseTime = new Date(release.published_at).getTime();
-        // Si la release en GitHub se publicó después del build local (margen de 1 minuto)
-        if (releaseTime > (currentBuildTime + 60000)) {
+      // Comparar timestamp de los assets subidos o de la release de GitHub vs build local
+      let latestRemoteTime = 0;
+      if (release.published_at) latestRemoteTime = Math.max(latestRemoteTime, new Date(release.published_at).getTime());
+      if (release.updated_at) latestRemoteTime = Math.max(latestRemoteTime, new Date(release.updated_at).getTime());
+      if (Array.isArray(release.assets)) {
+        release.assets.forEach(a => {
+          if (a.updated_at) latestRemoteTime = Math.max(latestRemoteTime, new Date(a.updated_at).getTime());
+          if (a.created_at) latestRemoteTime = Math.max(latestRemoteTime, new Date(a.created_at).getTime());
+        });
+      }
+
+      if (!isNewer && latestRemoteTime > 0 && currentBuildTime > 0) {
+        // Si hay una actualización o assets subidos con posterioridad al build local
+        if (latestRemoteTime > (currentBuildTime + 5000)) {
           isNewer = true;
         }
       }

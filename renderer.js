@@ -1771,9 +1771,9 @@ window.addEventListener('keydown', (e) => {
 window.addEventListener('DOMContentLoaded', () => {
   if (isProjectorMode) {
     document.body.classList.add('projector-mode');
-    document.title = 'BingHo v1.0.0 - Pantalla de Proyección';
+    document.title = 'BingHo v1.0.1 - Pantalla de Proyección';
   } else {
-    document.title = 'BingHo v1.0.0 - Por Hernán Cussit';
+    document.title = 'BingHo v1.0.1 - Por Hernán Cussit';
   }
 
   // Cargar versión y créditos dinámicamente desde el backend si está disponible
