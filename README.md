@@ -43,6 +43,7 @@ Si **BingHo** te ha sido de utilidad para tus sorteos o eventos y deseas colabor
   - Los números correctos cantados se destacan en **verde con zoom dinámico**.
   - Los números erróneos o no cantados alertan en **rojo**.
   - Los números auditados permanecen resaltados durante toda la revisión del cartón.
+- **Corrección en Auditoría**: Permite desmarcar números auditados por error usando el botón **Quitar** o **Deshacer Auditado (`Ctrl+Z`)** sin alterar los números cantados del sorteo.
 - Atajo rápido: **`[Ctrl + B]`**.
 
 ### ⚡ Auto-Actualizador In-App 100% Automático
@@ -58,9 +59,9 @@ Si **BingHo** te ha sido de utilidad para tus sorteos o eventos y deseas colabor
 - **Alto Contraste**: Fondo negro absoluto con tipografía cian y blanca, ideal para pantallas OLED o paneles LED en exteriores.
 - **Luz de Día**: Fondo claro con azul rey profundo, optimizado para evitar cualquier interferencia con los colores verde y rojo de auditoría.
 
-### 🔒 Tablero Protegido y Corrección Inline de Errores
+### 🔒 Tablero Protegido y Corrección Inline Dinámica
 - Las celdas del tablero principal están bloqueadas a clics directos para prevenir marcaciones accidentales.
-- Panel de corrección rápida para quitar números ingresados por error o deshacer el último número cantado sin reiniciar la partida.
+- Panel de corrección rápida para quitar números ingresados por error o deshacer el último número (`Ctrl+Z`), adaptándose automáticamente al modo Sorteo o al modo Auditoría.
 
 ### 💾 Persistencia Anti-Cierre (Protección Total de Datos)
 - Todo el estado del sorteo (números cantados, título, tema, escala) se almacena continuamente en tiempo real.
@@ -77,6 +78,7 @@ Si **BingHo** te ha sido de utilidad para tus sorteos o eventos y deseas colabor
 | Tecla | Función |
 | :--- | :--- |
 | `[Enter]` | Cantar número (en modo Sorteo) o Validar número (en modo Auditoría) |
+| `[Ctrl + Z]` | Deshacer último número cantado / Deshacer último número auditado |
 | `[F10]` | Abrir / Cerrar Modo Segunda Pantalla (Proyector) |
 | `[F11]` | Alternar Pantalla Completa |
 | `[Ctrl + B]` | Activar / Desactivar Modo Auditoría BINGO |

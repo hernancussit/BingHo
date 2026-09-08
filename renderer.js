@@ -16,6 +16,7 @@ const isProjectorMode = urlParams.get('mode') === 'projector';
 
 const state = {
   numerosSalidos: [], // Array de números cantados en orden cronológico
+  numerosAuditados: [], // Array de números auditados (verdes o rojos) en modo Bingo
   isBingoMode: false, // false: Modo Sorteo | true: Modo Bingo (Auditoría)
   drawTitle: 'SORTEO N° 001',
   currentTheme: 'clasico',
@@ -118,6 +119,7 @@ function broadcastState() {
   if (isProjectorMode) return;
   const payload = {
     numerosSalidos: state.numerosSalidos,
+    numerosAuditados: state.numerosAuditados,
     isBingoMode: state.isBingoMode,
     drawTitle: state.drawTitle,
     currentTheme: state.currentTheme,
@@ -149,6 +151,10 @@ function applyExternalState(payload) {
     refreshBoardFromState();
   }
 
+  if (Array.isArray(payload.numerosAuditados)) {
+    state.numerosAuditados = [...payload.numerosAuditados];
+  }
+
   if (typeof payload.isBingoMode === 'boolean') {
     state.isBingoMode = payload.isBingoMode;
     if (DOM.auditStatusBadge) {
@@ -169,11 +175,32 @@ function applyExternalState(payload) {
       DOM.btnWinnerCelebration.disabled = !state.isBingoMode;
     }
     if (!state.isBingoMode) {
+      state.numerosAuditados = [];
       document.querySelectorAll('.cell-audit-valid, .cell-audit-invalid').forEach(c => {
         c.classList.remove('cell-audit-valid', 'cell-audit-invalid');
       });
       if (DOM.auditToast) DOM.auditToast.style.display = 'none';
       hideWinnerCelebration(false);
+    } else {
+      // Re-aplicar clases de auditoría activas
+      document.querySelectorAll('.cell-audit-valid, .cell-audit-invalid').forEach(cell => {
+        const num = parseInt(cell.dataset.number, 10);
+        if (!state.numerosAuditados.includes(num)) {
+          cell.classList.remove('cell-audit-valid', 'cell-audit-invalid');
+        }
+      });
+      state.numerosAuditados.forEach(num => {
+        const cell = document.getElementById(`cell-${num}`);
+        if (cell) {
+          if (state.numerosSalidos.includes(num)) {
+            cell.classList.remove('cell-audit-invalid');
+            cell.classList.add('cell-audit-valid');
+          } else {
+            cell.classList.remove('cell-audit-valid');
+            cell.classList.add('cell-audit-invalid');
+          }
+        }
+      });
     }
   }
 
@@ -209,6 +236,9 @@ function applyExternalEvent(eventType, eventData = {}) {
     }
   } else if (eventType === 'number-audited') {
     const { num, isValid, orderIndex } = eventData;
+    if (!state.numerosAuditados.includes(num)) {
+      state.numerosAuditados.push(num);
+    }
     const cell = document.getElementById(`cell-${num}`);
     if (isValid) {
       if (cell) {
@@ -222,6 +252,16 @@ function applyExternalEvent(eventType, eventData = {}) {
         cell.classList.add('cell-audit-invalid');
       }
       showAuditToast(false, `N° ${String(num).padStart(2, '0')} NO SALIÓ`, `Número NO cantado en sorteo`);
+    }
+  } else if (eventType === 'audit-number-removed') {
+    const { num } = eventData;
+    state.numerosAuditados = state.numerosAuditados.filter(n => n !== num);
+    const cell = document.getElementById(`cell-${num}`);
+    if (cell) {
+      cell.classList.remove('cell-audit-valid', 'cell-audit-invalid');
+    }
+    if (DOM.auditToast) {
+      DOM.auditToast.style.display = 'none';
     }
   } else if (eventType === 'winner-celebration') {
     showWinnerCelebration(false);
@@ -731,6 +771,41 @@ function handleInlineRemoveNumber() {
     return;
   }
 
+  // MODO AUDITORÍA BINGO: Quitar la marcación de auditoría (verde o roja) del número
+  if (state.isBingoMode) {
+    const isAudited = state.numerosAuditados.includes(num);
+    const cell = document.getElementById(`cell-${num}`);
+    const hasAuditClass = cell && (cell.classList.contains('cell-audit-valid') || cell.classList.contains('cell-audit-invalid'));
+
+    if (!isAudited && !hasAuditClass) {
+      showInputShake(DOM.removeInlineInput);
+      playTone(180, 'sawtooth', 0.2);
+      DOM.removeInlineInput.value = '';
+      refocusInput();
+      return;
+    }
+
+    // Quitar de la lista de auditados
+    state.numerosAuditados = state.numerosAuditados.filter(n => n !== num);
+
+    // Quitar clases de auditoría de la celda
+    if (cell) {
+      cell.classList.remove('cell-audit-valid', 'cell-audit-invalid');
+    }
+
+    if (DOM.auditToast) {
+      DOM.auditToast.style.display = 'none';
+    }
+
+    playTone(320, 'sine', 0.12);
+    DOM.removeInlineInput.value = '';
+    broadcastEvent('audit-number-removed', { num });
+    broadcastState();
+    refocusInput();
+    return;
+  }
+
+  // MODO SORTEO NORMAL: Quitar número cantado de la partida
   if (!state.numerosSalidos.includes(num)) {
     showInputShake(DOM.removeInlineInput);
     playTone(180, 'sawtooth', 0.2);
@@ -739,7 +814,7 @@ function handleInlineRemoveNumber() {
     return;
   }
 
-  // Eliminar el número del array
+  // Eliminar el número del array de sorteo
   state.numerosSalidos = state.numerosSalidos.filter(n => n !== num);
 
   // Quitar clases activas y de auditoría de la celda
@@ -771,7 +846,43 @@ function handleInlineRemoveNumber() {
 }
 
 function undoLastNumber() {
-  if (isProjectorMode || state.numerosSalidos.length === 0) return;
+  if (isProjectorMode) return;
+
+  // MODO AUDITORÍA BINGO: Deshacer el último número auditado (verde o rojo)
+  if (state.isBingoMode) {
+    let removedAuditNum = null;
+
+    if (state.numerosAuditados && state.numerosAuditados.length > 0) {
+      removedAuditNum = state.numerosAuditados.pop();
+    } else {
+      // Fallback: Buscar en el DOM si hay alguna celda con clase de auditoría
+      const auditedCells = Array.from(document.querySelectorAll('.cell-audit-valid, .cell-audit-invalid'));
+      if (auditedCells.length > 0) {
+        const lastCell = auditedCells[auditedCells.length - 1];
+        removedAuditNum = parseInt(lastCell.dataset.number, 10);
+      }
+    }
+
+    if (removedAuditNum === null || isNaN(removedAuditNum)) return;
+
+    const cell = document.getElementById(`cell-${removedAuditNum}`);
+    if (cell) {
+      cell.classList.remove('cell-audit-valid', 'cell-audit-invalid');
+    }
+
+    if (DOM.auditToast) {
+      DOM.auditToast.style.display = 'none';
+    }
+
+    playTone(320, 'sine', 0.12);
+    broadcastEvent('audit-number-removed', { num: removedAuditNum });
+    broadcastState();
+    refocusInput();
+    return;
+  }
+
+  // MODO SORTEO NORMAL: Deshacer el último número cantado
+  if (state.numerosSalidos.length === 0) return;
 
   const removedNum = state.numerosSalidos.pop();
   const cell = document.getElementById(`cell-${removedNum}`);
@@ -806,6 +917,7 @@ function toggleBingoMode() {
   state.isBingoMode = !state.isBingoMode;
 
   if (state.isBingoMode) {
+    state.numerosAuditados = [];
     if (DOM.btnBingoToggle) {
       DOM.btnBingoToggle.classList.add('active');
       DOM.btnBingoToggle.setAttribute('aria-pressed', 'true');
@@ -818,7 +930,15 @@ function toggleBingoMode() {
     if (DOM.inputLabel) DOM.inputLabel.textContent = 'AUDITAR N°';
     if (DOM.inputHint) DOM.inputHint.textContent = 'Ingrese N° para auditar en cartón';
     if (DOM.numberInput) DOM.numberInput.placeholder = '??';
+    if (DOM.btnUndo) {
+      DOM.btnUndo.textContent = '↺ Deshacer Auditado';
+      DOM.btnUndo.title = 'Deshacer último número auditado (Ctrl+Z)';
+    }
+    if (DOM.btnRemoveInline) {
+      DOM.btnRemoveInline.title = 'Quitar marcación de auditoría de este número';
+    }
   } else {
+    state.numerosAuditados = [];
     if (DOM.btnBingoToggle) {
       DOM.btnBingoToggle.classList.remove('active');
       DOM.btnBingoToggle.setAttribute('aria-pressed', 'false');
@@ -832,6 +952,13 @@ function toggleBingoMode() {
     if (DOM.inputHint) DOM.inputHint.textContent = 'Presione [Enter]';
     if (DOM.numberInput) DOM.numberInput.placeholder = '00';
     if (DOM.auditToast) DOM.auditToast.style.display = 'none';
+    if (DOM.btnUndo) {
+      DOM.btnUndo.textContent = '↺ Deshacer Último';
+      DOM.btnUndo.title = 'Deshacer el último número ingresado (Ctrl+Z)';
+    }
+    if (DOM.btnRemoveInline) {
+      DOM.btnRemoveInline.title = 'Quitar este número del sorteo';
+    }
 
     document.querySelectorAll('.cell-audit-valid, .cell-audit-invalid').forEach(c => {
       c.classList.remove('cell-audit-valid', 'cell-audit-invalid');
@@ -848,6 +975,10 @@ function auditNumber(num) {
   const exists = state.numerosSalidos.includes(num);
   const cell = document.getElementById(`cell-${num}`);
   let orderIndex = 0;
+
+  // Registrar en el orden cronológico de auditoría (para poder deshacerlo en orden)
+  state.numerosAuditados = state.numerosAuditados.filter(n => n !== num);
+  state.numerosAuditados.push(num);
 
   if (exists) {
     orderIndex = state.numerosSalidos.indexOf(num) + 1;
@@ -871,6 +1002,7 @@ function auditNumber(num) {
   }
 
   broadcastEvent('number-audited', { num, isValid: exists, orderIndex });
+  broadcastState();
 }
 
 function showAuditToast(isValid, title, desc) {
@@ -1398,6 +1530,12 @@ window.addEventListener('keydown', (e) => {
       refocusInput();
       return;
     }
+  }
+
+  // Ctrl+Z o Cmd+Z para deshacer último número (en Sorteo o en Auditoría)
+  if (!isProjectorMode && (e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z') && !e.shiftKey) {
+    e.preventDefault();
+    undoLastNumber();
   }
 
   // Ctrl+B o Alt+B para alternar modo BINGO
