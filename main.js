@@ -58,6 +58,42 @@ function fetchLatestRelease() {
   return new Promise((resolve, reject) => {
     const options = {
       hostname: 'api.github.com',
+      path: '/repos/hernancussit/BingHo/releases/latest',
+      headers: {
+        'User-Agent': 'BingHo-Desktop-App',
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    };
+
+    https.get(options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          try {
+            const release = JSON.parse(data);
+            if (release && (release.tag_name || release.name)) {
+              return resolve(release);
+            }
+            reject(new Error('No se encontró información de versión válida.'));
+          } catch (e) {
+            reject(e);
+          }
+        } else {
+          // Fallback al listado general de releases si /latest falla
+          fallbackFetchAllReleases().then(resolve).catch(reject);
+        }
+      });
+    }).on('error', () => {
+      fallbackFetchAllReleases().then(resolve).catch(reject);
+    });
+  });
+}
+
+function fallbackFetchAllReleases() {
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname: 'api.github.com',
       path: '/repos/hernancussit/BingHo/releases?per_page=10',
       headers: {
         'User-Agent': 'BingHo-Desktop-App',

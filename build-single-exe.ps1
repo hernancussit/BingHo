@@ -93,10 +93,26 @@ namespace BingHo
 
                 if (needsExtract)
                 {
-                    if (Directory.Exists(targetDir))
+                    KillProcesses();
+                    System.Threading.Thread.Sleep(250);
+
+                    for (int retry = 0; retry < 5; retry++)
                     {
-                        try { Directory.Delete(targetDir, true); } catch { }
+                        try
+                        {
+                            if (Directory.Exists(targetDir))
+                            {
+                                Directory.Delete(targetDir, true);
+                            }
+                            break;
+                        }
+                        catch
+                        {
+                            KillProcesses();
+                            System.Threading.Thread.Sleep(350);
+                        }
                     }
+
                     Directory.CreateDirectory(targetDir);
 
                     Assembly asm = Assembly.GetExecutingAssembly();
