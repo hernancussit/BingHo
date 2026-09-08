@@ -126,8 +126,36 @@ namespace BingHo
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al iniciar BingHo: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                DialogResult res = MessageBox.Show(
+                    "Se produjo un problema al iniciar BingHo o los archivos se encuentran en uso por otra instancia abierta en segundo plano.\n\n" +
+                    "Haz clic en 'Aceptar' (Cerrar) para terminar todos los procesos abiertos y vuelve a intentar iniciar la app de nuevo en unos segundos.\n\n" +
+                    "Detalle: " + ex.Message,
+                    "BingHo - Control de Procesos",
+                    MessageBoxButtons.OKCancel,
+                    MessageBoxIcon.Warning);
+
+                if (res == DialogResult.OK)
+                {
+                    KillProcesses();
+                }
             }
+        }
+
+        private static void KillProcesses()
+        {
+            try
+            {
+                int currentPid = Process.GetCurrentProcess().Id;
+                Process[] procs = Process.GetProcessesByName("BingHo");
+                foreach (var p in procs)
+                {
+                    if (p.Id != currentPid)
+                    {
+                        try { p.Kill(); p.WaitForExit(1000); } catch { }
+                    }
+                }
+            }
+            catch { }
         }
     }
 }

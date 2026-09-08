@@ -1,12 +1,58 @@
-const { app, BrowserWindow, globalShortcut, ipcMain, Menu, screen, shell } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, Menu, screen, shell, dialog } = require('electron');
 const path = require('path');
 const https = require('https');
 const fs = require('fs');
-const { spawn } = require('child_process');
+const { spawn, execSync } = require('child_process');
 const packageJson = require('./package.json');
 
 let mainWindow = null;
 let projectorWindow = null;
+
+// ==========================================================================
+// CONTROL DE INSTANCIA ÚNICA (PREVENIR DUPLICADOS Y GESTIONAR CIERRE)
+// ==========================================================================
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+  // Ya existe otra instancia de BingHo ejecutándose
+  app.whenReady().then(() => {
+    const choice = dialog.showMessageBoxSync({
+      type: 'warning',
+      buttons: ['Cerrar', 'Cancelar'],
+      defaultId: 0,
+      cancelId: 1,
+      title: 'BingHo - Aplicación ya en ejecución',
+      message: 'BingHo ya se encuentra en ejecución',
+      detail: 'Se ha detectado otra instancia de BingHo abierta en segundo plano.\n\nHaz clic en "Cerrar" para terminar los procesos abiertos y vuelve a intentar iniciar la app de nuevo en unos segundos.'
+    });
+
+    if (choice === 0) {
+      try {
+        const currentPid = process.pid;
+        if (process.platform === 'win32') {
+          try {
+            execSync(`taskkill /F /IM BingHo.exe /FI "PID ne ${currentPid}"`, { stdio: 'ignore' });
+          } catch (_) {
+            execSync('taskkill /F /IM BingHo.exe', { stdio: 'ignore' });
+          }
+        }
+      } catch (err) {
+        console.error('Error terminando procesos de BingHo:', err);
+      }
+    }
+
+    app.exit(0);
+  });
+} else {
+  app.on('second-instance', () => {
+    // Si se intenta abrir otra instancia, enfocar y restaurar la ventana del operador
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+}
 
 function fetchLatestRelease() {
   return new Promise((resolve, reject) => {
@@ -455,42 +501,45 @@ ipcMain.handle('quit-app', () => {
 });
 
 // Ciclo de vida Electron
-app.whenReady().then(() => {
-  createWindow();
+if (gotTheLock) {
+  app.whenReady().then(() => {
+    createWindow();
 
-  // Atajo F11 para alternar pantalla completa
-  globalShortcut.register('F11', () => {
-    const focused = BrowserWindow.getFocusedWindow() || mainWindow;
-    toggleFullScreen(focused);
+    // Atajo F11 para alternar pantalla completa
+    globalShortcut.register('F11', () => {
+      const focused = BrowserWindow.getFocusedWindow() || mainWindow;
+      toggleFullScreen(focused);
+    });
+
+    // Atajo F10 para alternar la segunda pantalla (proyector)
+    globalShortcut.register('F10', () => {
+      toggleProjectorWindow();
+    });
+
+    globalShortcut.register('Escape', () => {
+      const focused = BrowserWindow.getFocusedWindow();
+      if (focused && focused.isFullScreen()) {
+        focused.setFullScreen(false);
+        focused.setAlwaysOnTop(false);
+      }
+    });
+
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow();
+      }
+    });
   });
 
-  // Atajo F10 para alternar la segunda pantalla (proyector)
-  globalShortcut.register('F10', () => {
-    toggleProjectorWindow();
+  app.on('will-quit', () => {
+    globalShortcut.unregisterAll();
   });
 
-  globalShortcut.register('Escape', () => {
-    const focused = BrowserWindow.getFocusedWindow();
-    if (focused && focused.isFullScreen()) {
-      focused.setFullScreen(false);
-      focused.setAlwaysOnTop(false);
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') {
+      app.quit();
     }
   });
+}
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
-  });
-});
-
-app.on('will-quit', () => {
-  globalShortcut.unregisterAll();
-});
-
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
 
