@@ -1,6 +1,8 @@
 const { app, BrowserWindow, globalShortcut, ipcMain, Menu, screen, shell } = require('electron');
 const path = require('path');
 const https = require('https');
+const fs = require('fs');
+const { spawn } = require('child_process');
 const packageJson = require('./package.json');
 
 let mainWindow = null;
@@ -309,6 +311,125 @@ ipcMain.handle('check-for-updates', async () => {
       error: err.message,
       currentVersion: packageJson.version
     };
+  }
+});
+
+function downloadFileWithProgress(url, destPath, onProgress) {
+  return new Promise((resolve, reject) => {
+    function get(currentUrl) {
+      https.get(currentUrl, {
+        headers: {
+          'User-Agent': 'BingHo-Desktop-App',
+          'Accept': 'application/octet-stream'
+        }
+      }, (res) => {
+        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+          return get(res.headers.location);
+        }
+        if (res.statusCode !== 200) {
+          return reject(new Error(`Error de descarga HTTP ${res.statusCode}`));
+        }
+
+        const total = parseInt(res.headers['content-length'], 10) || 0;
+        let downloaded = 0;
+        const fileStream = fs.createWriteStream(destPath);
+
+        res.on('data', (chunk) => {
+          downloaded += chunk.length;
+          if (total > 0 && onProgress) {
+            const percent = Math.min(100, Math.round((downloaded / total) * 100));
+            onProgress(percent, downloaded, total);
+          }
+        });
+
+        res.pipe(fileStream);
+
+        fileStream.on('finish', () => {
+          fileStream.close(() => resolve(destPath));
+        });
+
+        fileStream.on('error', (err) => {
+          try { if (fs.existsSync(destPath)) fs.unlinkSync(destPath); } catch (_) {}
+          reject(err);
+        });
+      }).on('error', (err) => {
+        try { if (fs.existsSync(destPath)) fs.unlinkSync(destPath); } catch (_) {}
+        reject(err);
+      });
+    }
+
+    get(url);
+  });
+}
+
+// Descarga e instalación automática in-app de la nueva versión
+ipcMain.handle('download-and-install-update', async (event, downloadUrl) => {
+  const senderWin = BrowserWindow.fromWebContents(event.sender) || mainWindow;
+  try {
+    const tempDir = app.getPath('temp');
+    const updateExePath = path.join(tempDir, `BingHo_Update_${Date.now()}.exe`);
+
+    await downloadFileWithProgress(downloadUrl, updateExePath, (percent, downloaded, total) => {
+      if (senderWin && !senderWin.isDestroyed()) {
+        senderWin.webContents.send('update-download-progress', {
+          percent,
+          downloaded,
+          total,
+          downloadedMB: (downloaded / (1024 * 1024)).toFixed(1),
+          totalMB: (total / (1024 * 1024)).toFixed(1)
+        });
+      }
+    });
+
+    // Determinar la ruta del ejecutable a reemplazar
+    const targetExe = process.env.BINGHO_PORTABLE_EXE || process.env.PORTABLE_EXECUTABLE_FILE;
+
+    if (targetExe && fs.existsSync(targetExe)) {
+      // Crear script .BAT en el directorio temporal para esperar el cierre de BingHo, reemplazar el EXE y relanzarlo
+      const scriptPath = path.join(tempDir, `bingho_updater_${Date.now()}.bat`);
+      const batContent = `@echo off
+setlocal
+:: Esperar 2 segundos a que el proceso BingHo libere el archivo EXE
+timeout /t 2 /nobreak > nul
+:: Reemplazar el ejecutable original por la nueva versión descargada
+copy /y "${updateExePath}" "${targetExe}" > nul
+del "${updateExePath}" > nul
+:: Iniciar la versión actualizada de BingHo
+start "" "${targetExe}"
+:: Autoeliminar este script
+(goto) 2>nul & del "%~f0"
+exit
+`;
+      fs.writeFileSync(scriptPath, batContent, 'utf8');
+
+      const installerProcess = spawn('cmd.exe', ['/c', scriptPath], {
+        detached: true,
+        stdio: 'ignore',
+        windowsHide: true
+      });
+      installerProcess.unref();
+
+      setTimeout(() => {
+        app.quit();
+      }, 400);
+
+      return { success: true, restarting: true };
+    } else {
+      // En modo desarrollo o si no se detecta la ruta original, iniciar directamente el nuevo EXE descargado
+      const newProcess = spawn(updateExePath, [], {
+        detached: true,
+        stdio: 'ignore'
+      });
+      newProcess.unref();
+
+      setTimeout(() => {
+        app.quit();
+      }, 400);
+
+      return { success: true, restarting: true };
+    }
+  } catch (err) {
+    return { success: false, error: err.message };
   }
 });
 

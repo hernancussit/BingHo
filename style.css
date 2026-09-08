@@ -1409,3 +1409,49 @@ body.projector-mode .winner-badge-congrats {
   color: var(--accent-color);
 }
 
+/* Barra de Progreso de Descarga en Actualizador */
+.update-progress-container {
+  margin: 14px 0 16px;
+  text-align: left;
+}
+
+.update-progress-bar-bg {
+  width: 100%;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.update-progress-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #10b981, #00ff66, #00e5ff);
+  border-radius: 8px;
+  box-shadow: 0 0 14px rgba(0, 255, 102, 0.8);
+  transition: width 0.15s ease-out;
+}
+
+.update-progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+  font-size: 11.5px;
+  font-weight: 800;
+  font-family: 'Chakra Petch', sans-serif;
+  color: var(--text-secondary);
+}
+
+#updateProgressText {
+  color: #00ff66;
+  text-shadow: 0 0 8px rgba(0, 255, 102, 0.5);
+}
+
+#updateProgressSize {
+  color: #ffd700;
+}
+

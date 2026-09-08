@@ -249,14 +249,27 @@
        MODAL DE ACTUALIZACIÓN DESDE GITHUB
        ================================================================= -->
   <div class="modal-overlay" id="updateModalOverlay">
-    <div class="modal-box">
+    <div class="modal-box update-modal-box">
       <div class="modal-icon" id="updateModalIcon">🚀</div>
       <h3 class="modal-title" id="updateModalTitle">Actualización Disponible</h3>
       <p class="modal-desc" id="updateModalDesc">Comprobando versiones en GitHub...</p>
       <div class="update-notes-box" id="updateNotesBox" style="display: none;"></div>
-      <div class="modal-actions">
+      
+      <!-- Barra de Progreso de Descarga en Vivo -->
+      <div class="update-progress-container" id="updateProgressContainer" style="display: none;">
+        <div class="update-progress-bar-bg">
+          <div class="update-progress-bar-fill" id="updateProgressBar"></div>
+        </div>
+        <div class="update-progress-info">
+          <span id="updateProgressText">Descargando: 0%</span>
+          <span id="updateProgressSize">0.0 MB / 0.0 MB</span>
+        </div>
+      </div>
+
+      <div class="modal-actions" id="updateModalActions">
         <button class="btn-modal-secondary" id="btnCancelUpdate">Cerrar</button>
-        <button class="btn-modal-danger" id="btnDownloadUpdate" style="display: none; background: #10b981;">⬇️ Descargar Actualización</button>
+        <button class="btn-modal-secondary" id="btnManualDownload" style="display: none;">🌐 Abrir en Web</button>
+        <button class="btn-modal-danger" id="btnDownloadUpdate" style="display: none; background: linear-gradient(135deg, #10b981, #059669);">⚡ Actualizar y Reiniciar</button>
       </div>
     </div>
   </div>

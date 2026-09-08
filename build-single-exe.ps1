@@ -115,6 +115,7 @@ namespace BingHo
                     psi.WorkingDirectory = targetDir;
                     psi.Arguments = string.Join(" ", args);
                     psi.UseShellExecute = false;
+                    psi.EnvironmentVariables["BINGHO_PORTABLE_EXE"] = Assembly.GetExecutingAssembly().Location;
 
                     Process.Start(psi);
                 }

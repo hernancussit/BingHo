@@ -29,6 +29,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Actualizador desde GitHub
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  downloadAndInstallUpdate: (url) => ipcRenderer.invoke('download-and-install-update', url),
+  onUpdateDownloadProgress: (callback) => {
+    ipcRenderer.on('update-download-progress', (_event, data) => callback(data));
+  },
   openExternalUrl: (url) => ipcRenderer.invoke('open-external-url', url)
 });
 

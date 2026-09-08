@@ -92,11 +92,17 @@ const DOM = {
   updateModalTitle: document.getElementById('updateModalTitle'),
   updateModalDesc: document.getElementById('updateModalDesc'),
   updateNotesBox: document.getElementById('updateNotesBox'),
+  updateProgressContainer: document.getElementById('updateProgressContainer'),
+  updateProgressBar: document.getElementById('updateProgressBar'),
+  updateProgressText: document.getElementById('updateProgressText'),
+  updateProgressSize: document.getElementById('updateProgressSize'),
   btnCancelUpdate: document.getElementById('btnCancelUpdate'),
+  btnManualDownload: document.getElementById('btnManualDownload'),
   btnDownloadUpdate: document.getElementById('btnDownloadUpdate')
 };
 
 let updateDownloadUrl = '';
+let updateReleasePageUrl = '';
 
 // ==========================================================================
 // 3. SINCRONIZACIÓN OPERADOR <-> PROYECTOR
@@ -957,8 +963,14 @@ async function checkAppUpdates(isManual = false) {
     DOM.updateModalIcon.textContent = '🔄';
     DOM.updateModalTitle.textContent = 'Comprobando actualizaciones...';
     DOM.updateModalDesc.textContent = 'Consultando el repositorio de BingHo en GitHub...';
-    DOM.updateNotesBox.style.display = 'none';
-    DOM.btnDownloadUpdate.style.display = 'none';
+    if (DOM.updateNotesBox) DOM.updateNotesBox.style.display = 'none';
+    if (DOM.updateProgressContainer) DOM.updateProgressContainer.style.display = 'none';
+    if (DOM.btnDownloadUpdate) DOM.btnDownloadUpdate.style.display = 'none';
+    if (DOM.btnManualDownload) DOM.btnManualDownload.style.display = 'none';
+    if (DOM.btnCancelUpdate) {
+      DOM.btnCancelUpdate.disabled = false;
+      DOM.btnCancelUpdate.textContent = 'Cerrar';
+    }
   }
 
   try {
@@ -966,15 +978,37 @@ async function checkAppUpdates(isManual = false) {
     if (res.success) {
       if (res.hasUpdate) {
         updateDownloadUrl = res.downloadUrl || res.releaseUrl;
+        updateReleasePageUrl = res.releaseUrl || res.downloadUrl;
+        
         DOM.updateModalOverlay.classList.add('show');
         DOM.updateModalIcon.textContent = '🚀';
         DOM.updateModalTitle.innerHTML = `¡Nueva Versión Disponible! <span class="update-badge-new">${res.latestTag}</span>`;
-        DOM.updateModalDesc.innerHTML = `Tienes instalada la versión <b>v${res.currentVersion}</b> y la versión <b>${res.latestTag}</b> ya está lista para descargar.`;
-        if (res.releaseNotes) {
+        DOM.updateModalDesc.innerHTML = `Tienes instalada la versión <b>v${res.currentVersion}</b> y la versión <b>${res.latestTag}</b> ya está disponible para instalar.`;
+        
+        if (DOM.updateNotesBox && res.releaseNotes) {
           DOM.updateNotesBox.textContent = res.releaseNotes;
           DOM.updateNotesBox.style.display = 'block';
         }
-        DOM.btnDownloadUpdate.style.display = 'inline-block';
+        
+        if (DOM.updateProgressContainer) {
+          DOM.updateProgressContainer.style.display = 'none';
+        }
+        if (DOM.updateProgressBar) {
+          DOM.updateProgressBar.style.width = '0%';
+        }
+        
+        if (DOM.btnDownloadUpdate) {
+          DOM.btnDownloadUpdate.style.display = 'inline-block';
+          DOM.btnDownloadUpdate.disabled = false;
+          DOM.btnDownloadUpdate.textContent = '⚡ Actualizar y Reiniciar';
+        }
+        if (DOM.btnManualDownload) {
+          DOM.btnManualDownload.style.display = 'inline-block';
+        }
+        if (DOM.btnCancelUpdate) {
+          DOM.btnCancelUpdate.disabled = false;
+        }
+
         if (DOM.updateBtnText) {
           DOM.updateBtnText.textContent = `Actualizar (${res.latestTag})`;
           DOM.btnCheckUpdates.classList.add('active');
@@ -983,21 +1017,29 @@ async function checkAppUpdates(isManual = false) {
         DOM.updateModalIcon.textContent = '✅';
         DOM.updateModalTitle.textContent = '¡Tienes la última versión!';
         DOM.updateModalDesc.innerHTML = `Estás ejecutando <b>v${res.currentVersion}</b>, que es la versión más reciente disponible.`;
-        DOM.updateNotesBox.style.display = 'none';
-        DOM.btnDownloadUpdate.style.display = 'none';
+        if (DOM.updateNotesBox) DOM.updateNotesBox.style.display = 'none';
+        if (DOM.updateProgressContainer) DOM.updateProgressContainer.style.display = 'none';
+        if (DOM.btnDownloadUpdate) DOM.btnDownloadUpdate.style.display = 'none';
+        if (DOM.btnManualDownload) DOM.btnManualDownload.style.display = 'none';
       }
     } else if (isManual) {
       DOM.updateModalIcon.textContent = '⚠️';
       DOM.updateModalTitle.textContent = 'No se pudo comprobar';
       DOM.updateModalDesc.textContent = `Error al conectar con GitHub: ${res.error || 'Verifica tu conexión a internet.'}`;
-      DOM.updateNotesBox.style.display = 'none';
-      DOM.btnDownloadUpdate.style.display = 'none';
+      if (DOM.updateNotesBox) DOM.updateNotesBox.style.display = 'none';
+      if (DOM.updateProgressContainer) DOM.updateProgressContainer.style.display = 'none';
+      if (DOM.btnDownloadUpdate) DOM.btnDownloadUpdate.style.display = 'none';
+      if (DOM.btnManualDownload) DOM.btnManualDownload.style.display = 'none';
     }
   } catch (e) {
     if (isManual) {
       DOM.updateModalIcon.textContent = '⚠️';
       DOM.updateModalTitle.textContent = 'Error';
       DOM.updateModalDesc.textContent = 'Ocurrió un error al buscar actualizaciones.';
+      if (DOM.updateNotesBox) DOM.updateNotesBox.style.display = 'none';
+      if (DOM.updateProgressContainer) DOM.updateProgressContainer.style.display = 'none';
+      if (DOM.btnDownloadUpdate) DOM.btnDownloadUpdate.style.display = 'none';
+      if (DOM.btnManualDownload) DOM.btnManualDownload.style.display = 'none';
     }
   }
 }
@@ -1193,10 +1235,81 @@ if (!isProjectorMode) {
     });
   }
 
+  // Descarga Manual en Navegador
+  if (DOM.btnManualDownload) {
+    DOM.btnManualDownload.addEventListener('click', () => {
+      const url = updateReleasePageUrl || updateDownloadUrl;
+      if (url && window.electronAPI && window.electronAPI.openExternalUrl) {
+        window.electronAPI.openExternalUrl(url);
+      }
+    });
+  }
+
+  // Descarga e Instalación Automática In-App
   if (DOM.btnDownloadUpdate) {
-    DOM.btnDownloadUpdate.addEventListener('click', () => {
-      if (updateDownloadUrl && window.electronAPI && window.electronAPI.openExternalUrl) {
-        window.electronAPI.openExternalUrl(updateDownloadUrl);
+    DOM.btnDownloadUpdate.addEventListener('click', async () => {
+      if (!updateDownloadUrl) return;
+
+      if (!window.electronAPI || !window.electronAPI.downloadAndInstallUpdate) {
+        // Fallback a navegador
+        if (window.electronAPI && window.electronAPI.openExternalUrl) {
+          window.electronAPI.openExternalUrl(updateDownloadUrl);
+        }
+        return;
+      }
+
+      // Preparar UI de descarga
+      if (DOM.updateProgressContainer) DOM.updateProgressContainer.style.display = 'block';
+      if (DOM.updateProgressBar) DOM.updateProgressBar.style.width = '0%';
+      if (DOM.updateProgressText) DOM.updateProgressText.textContent = 'Iniciando descarga...';
+      if (DOM.updateProgressSize) DOM.updateProgressSize.textContent = 'Conectando...';
+      
+      DOM.btnDownloadUpdate.disabled = true;
+      DOM.btnDownloadUpdate.textContent = '⏳ Descargando...';
+      if (DOM.btnCancelUpdate) DOM.btnCancelUpdate.disabled = true;
+      if (DOM.btnManualDownload) DOM.btnManualDownload.style.display = 'none';
+
+      try {
+        const result = await window.electronAPI.downloadAndInstallUpdate(updateDownloadUrl);
+        if (result.success) {
+          if (DOM.updateProgressBar) DOM.updateProgressBar.style.width = '100%';
+          if (DOM.updateProgressText) DOM.updateProgressText.textContent = '✅ ¡Descarga completada con éxito!';
+          if (DOM.updateModalDesc) {
+            DOM.updateModalDesc.innerHTML = '<b>Aplicando actualización y reiniciando BingHo automáticamente...</b>';
+          }
+          DOM.btnDownloadUpdate.textContent = '🔄 Reiniciando...';
+        } else {
+          if (DOM.updateModalDesc) {
+            DOM.updateModalDesc.textContent = `Error al actualizar: ${result.error || 'Error desconocido'}`;
+          }
+          DOM.btnDownloadUpdate.disabled = false;
+          DOM.btnDownloadUpdate.textContent = 'Reintentar Actualización';
+          if (DOM.btnCancelUpdate) DOM.btnCancelUpdate.disabled = false;
+          if (DOM.btnManualDownload) DOM.btnManualDownload.style.display = 'inline-block';
+        }
+      } catch (err) {
+        if (DOM.updateModalDesc) {
+          DOM.updateModalDesc.textContent = `Error: ${err.message}`;
+        }
+        DOM.btnDownloadUpdate.disabled = false;
+        DOM.btnDownloadUpdate.textContent = 'Reintentar Actualización';
+        if (DOM.btnCancelUpdate) DOM.btnCancelUpdate.disabled = false;
+        if (DOM.btnManualDownload) DOM.btnManualDownload.style.display = 'inline-block';
+      }
+    });
+  }
+
+  // Listener de progreso de descarga en tiempo real
+  if (window.electronAPI && window.electronAPI.onUpdateDownloadProgress) {
+    window.electronAPI.onUpdateDownloadProgress((data) => {
+      if (DOM.updateProgressBar) {
+        DOM.updateProgressBar.style.width = `${data.percent}%`;
+      }
+      if (DOM.updateProgressText) {
+        DOM.updateProgressText.textContent = `Descargando actualización: ${data.percent}%`;
+      }
+      if (DOM.updateProgressSize) {
+        DOM.updateProgressSize.textContent = `${data.downloadedMB} MB / ${data.totalMB} MB`;
       }
     });
   }
