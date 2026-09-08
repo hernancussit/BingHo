@@ -360,22 +360,53 @@ ipcMain.on('sync-projector-event', (event, eventData) => {
 
 // Información de versión y autor
 ipcMain.handle('get-app-info', () => {
+  const ver = packageJson.version;
+  const build = packageJson.buildNumber || 1;
   return {
-    version: packageJson.version,
+    version: ver,
+    buildNumber: build,
+    buildTimestamp: packageJson.buildTimestamp || '',
+    displayVersion: `v${ver} (b${build})`,
     author: 'Hernán Cussit',
-    title: `BingHo v${packageJson.version}`
+    title: `BingHo v${ver} (Build ${build}) - Por Hernán Cussit`
   };
 });
 
-// Comprobación de actualizaciones vía GitHub Releases
+// Comprobación de actualizaciones vía GitHub Releases (con verificación de Build y Timestamp)
 ipcMain.handle('check-for-updates', async () => {
   try {
     const release = await fetchLatestRelease();
     const currentVer = packageJson.version;
+    const currentBuild = packageJson.buildNumber || 1;
+    const currentBuildTime = packageJson.buildTimestamp ? new Date(packageJson.buildTimestamp).getTime() : 0;
+
     const latestTag = release.tag_name || release.name || '';
     const cleanLatest = latestTag.replace(/^v/, '');
     
-    const isNewer = compareVersions(cleanLatest, currentVer) > 0;
+    // 1. Comparación semántica de versión base (ej: 0.9.8 > 0.9.7)
+    const verCmp = compareVersions(cleanLatest, currentVer);
+    let isNewer = verCmp > 0;
+    
+    // 2. Si la versión base es igual o no es menor, verificar Build Number o Timestamp de publicación
+    if (verCmp >= 0 && !isNewer) {
+      // Extraer posible build number del tag o título de la release (ej: Build 15, b15, .15)
+      const buildMatch = (latestTag + ' ' + (release.name || '')).match(/(?:build|b)[.\s-]?(\d+)/i);
+      if (buildMatch) {
+        const remoteBuild = parseInt(buildMatch[1], 10);
+        if (!isNaN(remoteBuild) && remoteBuild > currentBuild) {
+          isNewer = true;
+        }
+      }
+
+      // Comparar timestamp de publicación de GitHub vs build local
+      if (!isNewer && release.published_at && currentBuildTime > 0) {
+        const releaseTime = new Date(release.published_at).getTime();
+        // Si la release en GitHub se publicó después del build local (margen de 1 minuto)
+        if (releaseTime > (currentBuildTime + 60000)) {
+          isNewer = true;
+        }
+      }
+    }
     
     let downloadUrl = release.html_url;
     if (Array.isArray(release.assets)) {
@@ -389,6 +420,7 @@ ipcMain.handle('check-for-updates', async () => {
       success: true,
       hasUpdate: isNewer,
       currentVersion: currentVer,
+      currentBuild: currentBuild,
       latestVersion: cleanLatest,
       latestTag: latestTag,
       releaseTitle: release.name || latestTag,
@@ -400,7 +432,8 @@ ipcMain.handle('check-for-updates', async () => {
     return {
       success: false,
       error: err.message,
-      currentVersion: packageJson.version
+      currentVersion: packageJson.version,
+      currentBuild: packageJson.buildNumber || 1
     };
   }
 });

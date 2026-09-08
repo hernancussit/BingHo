@@ -1117,7 +1117,8 @@ async function checkAppUpdates(isManual = false) {
         DOM.updateModalOverlay.classList.add('show');
         DOM.updateModalIcon.textContent = '🚀';
         DOM.updateModalTitle.innerHTML = `¡Nueva Versión Disponible! <span class="update-badge-new">${res.latestTag}</span>`;
-        DOM.updateModalDesc.innerHTML = `Tienes instalada la versión <b>v${res.currentVersion}</b> y la versión <b>${res.latestTag}</b> ya está disponible para instalar.`;
+        const currentDisplay = `v${res.currentVersion}${res.currentBuild ? ` (Build ${res.currentBuild})` : ''}`;
+        DOM.updateModalDesc.innerHTML = `Tienes instalada la versión <b>${currentDisplay}</b> y la versión <b>${res.latestTag}</b> ya está disponible para instalar.`;
         
         if (DOM.updateNotesBox && res.releaseNotes) {
           DOM.updateNotesBox.textContent = res.releaseNotes;
@@ -1148,9 +1149,10 @@ async function checkAppUpdates(isManual = false) {
           DOM.btnCheckUpdates.classList.add('active');
         }
       } else if (isManual) {
+        const currentDisplay = `v${res.currentVersion}${res.currentBuild ? ` (Build ${res.currentBuild})` : ''}`;
         DOM.updateModalIcon.textContent = '✅';
         DOM.updateModalTitle.textContent = '¡Tienes la última versión!';
-        DOM.updateModalDesc.innerHTML = `Estás ejecutando <b>v${res.currentVersion}</b>, que es la versión más reciente disponible.`;
+        DOM.updateModalDesc.innerHTML = `Estás ejecutando <b>${currentDisplay}</b>, que es la versión más reciente disponible.`;
         if (DOM.updateNotesBox) DOM.updateNotesBox.style.display = 'none';
         if (DOM.updateProgressContainer) DOM.updateProgressContainer.style.display = 'none';
         if (DOM.btnDownloadUpdate) DOM.btnDownloadUpdate.style.display = 'none';
@@ -1565,13 +1567,14 @@ window.addEventListener('DOMContentLoaded', () => {
   if (window.electronAPI && window.electronAPI.getAppInfo) {
     window.electronAPI.getAppInfo().then(info => {
       if (info && info.version) {
+        const display = info.displayVersion || `v${info.version}`;
         const titleStr = isProjectorMode 
-          ? `BingHo v${info.version} - Pantalla de Proyección` 
-          : `BingHo v${info.version} - Por ${info.author || 'Hernán Cussit'}`;
+          ? `BingHo ${display} - Pantalla de Proyección` 
+          : `BingHo ${display} - Por ${info.author || 'Hernán Cussit'}`;
         document.title = titleStr;
-        if (DOM.leftBarVersionBadge) DOM.leftBarVersionBadge.textContent = `v${info.version}`;
-        if (DOM.appVersionBadge) DOM.appVersionBadge.textContent = `v${info.version}`;
-        if (DOM.footerVersionText) DOM.footerVersionText.textContent = `v${info.version}`;
+        if (DOM.leftBarVersionBadge) DOM.leftBarVersionBadge.textContent = display;
+        if (DOM.appVersionBadge) DOM.appVersionBadge.textContent = display;
+        if (DOM.footerVersionText) DOM.footerVersionText.textContent = display;
       }
     }).catch(() => {});
   }

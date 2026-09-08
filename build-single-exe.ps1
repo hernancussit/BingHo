@@ -6,14 +6,23 @@ Stop-Process -Name "BingHo" -Force -ErrorAction SilentlyContinue
 Stop-Process -Name "electron" -Force -ErrorAction SilentlyContinue
 Start-Sleep -Milliseconds 500
 
-Write-Host ">>> Paso 1: Generando empaquetado base de Electron (BingHo)..." -ForegroundColor Cyan
-& "C:\Program Files\nodejs\npm.cmd" run package:win
-Start-Sleep -Seconds 1
+Write-Host ">>> Paso 1: Actualizando build y empaquetando base de Electron..." -ForegroundColor Cyan
 
 $pkg = Get-Content "package.json" -Raw | ConvertFrom-Json
+$buildNumber = if ($pkg.buildNumber) { [int]$pkg.buildNumber + 1 } else { 1 }
+$buildTimestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+$pkg.buildNumber = $buildNumber
+$pkg.buildTimestamp = $buildTimestamp
+
+# Guardar package.json actualizado con el nuevo build antes de empaquetar
+$pkg | ConvertTo-Json -Depth 10 | Set-Content "package.json" -Encoding UTF8
+
 $appVersion = $pkg.version
 $cleanVer = ($appVersion -split '-')[0]
-$assemblyVer = if ($cleanVer -match '^\d+\.\d+\.\d+$') { "$cleanVer.0" } else { "1.0.0.0" }
+$assemblyVer = if ($cleanVer -match '^\d+\.\d+\.\d+$') { "$cleanVer.$buildNumber" } else { "1.0.0.$buildNumber" }
+
+& "C:\Program Files\nodejs\npx.cmd" -y @electron/packager . "BingHo" --platform=win32 --arch=x64 --icon=icon.ico --out=dist --overwrite --prune=true "--app-version=$cleanVer.$buildNumber" "--build-version=$cleanVer.$buildNumber" '--win32metadata.CompanyName=BingHo' '--win32metadata.FileDescription=BingHo - Tablero de Bingo' '--win32metadata.ProductName=BingHo'
+Start-Sleep -Seconds 1
 
 $distPath = "dist\BingHo-win32-x64"
 $zipPath = "dist\app_payload.zip"
