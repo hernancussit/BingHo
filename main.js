@@ -387,35 +387,16 @@ ipcMain.handle('check-for-updates', async () => {
     const latestTag = release.tag_name || release.name || '';
     const cleanLatest = latestTag.replace(/^v/, '');
     
-    // 1. Comparación semántica de versión base (ej: 0.9.8 > 0.9.7)
+    // 1. Comparación semántica de versión (SemVer): ej: 1.0.2 > 1.0.1 -> Update
     const verCmp = compareVersions(cleanLatest, currentVer);
     let isNewer = verCmp > 0;
     
-    // 2. Si la versión base es igual o no es menor, verificar Build Number o Timestamp de publicación
-    if (verCmp >= 0 && !isNewer) {
-      // Extraer posible build number del tag o título de la release (ej: Build 15, b15, .15)
+    // 2. Si la versión base es igual, verificar si hay un Build Number explícitamente superior
+    if (verCmp === 0 && !isNewer) {
       const buildMatch = (latestTag + ' ' + (release.name || '')).match(/(?:build|b)[.\s-]?(\d+)/i);
       if (buildMatch) {
         const remoteBuild = parseInt(buildMatch[1], 10);
         if (!isNaN(remoteBuild) && remoteBuild > currentBuild) {
-          isNewer = true;
-        }
-      }
-
-      // Comparar timestamp de los assets subidos o de la release de GitHub vs build local
-      let latestRemoteTime = 0;
-      if (release.published_at) latestRemoteTime = Math.max(latestRemoteTime, new Date(release.published_at).getTime());
-      if (release.updated_at) latestRemoteTime = Math.max(latestRemoteTime, new Date(release.updated_at).getTime());
-      if (Array.isArray(release.assets)) {
-        release.assets.forEach(a => {
-          if (a.updated_at) latestRemoteTime = Math.max(latestRemoteTime, new Date(a.updated_at).getTime());
-          if (a.created_at) latestRemoteTime = Math.max(latestRemoteTime, new Date(a.created_at).getTime());
-        });
-      }
-
-      if (!isNewer && latestRemoteTime > 0 && currentBuildTime > 0) {
-        // Si hay una actualización o assets subidos con posterioridad al build local
-        if (latestRemoteTime > (currentBuildTime + 5000)) {
           isNewer = true;
         }
       }

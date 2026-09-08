@@ -1,8 +1,8 @@
 ﻿{
     "name":  "bingho",
     "version":  "1.0.1",
-    "buildNumber":  7,
-    "buildTimestamp":  "2026-09-08T05:35:41Z",
+    "buildNumber":  8,
+    "buildTimestamp":  "2026-09-08T05:42:04Z",
     "description":  "BingHo - Sistema Profesional para Tableros de Bingo en Pantallas LED y ProyecciÃ³n",
     "main":  "main.js",
     "author":  "HernÃ¡n Cussit",
