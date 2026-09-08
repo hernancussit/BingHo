@@ -1,13 +1,16 @@
 /**
  * BingHo - RENDERER & STATE LOGIC
- * Persistencia Total (Anti-Crash), Modo Auditoría Persistente con Zoom Verde/Rojo,
- * Control Deslizante de Tamaño de Fuente (60%-100%), Corrección Inline y Tablero Bloqueado.
+ * Modo Doble Pantalla (Operador + Proyector Maximizado en Pantalla Extendida),
+ * Persistencia Total (Anti-Crash), Modo Auditoría con Zoom Verde/Rojo,
+ * Control Deslizante de Tamaño de Fuente (60%-130%), Corrección Inline y Tablero Bloqueado.
  */
 
 // ==========================================================================
-// 1. ESTADO GLOBAL
+// 1. ESTADO GLOBAL & DETECCIÓN DE MODO
 // ==========================================================================
 const STORAGE_KEY = 'bingho_state_v3';
+const urlParams = new URLSearchParams(window.location.search);
+const isProjectorMode = urlParams.get('mode') === 'projector';
 
 const state = {
   numerosSalidos: [], // Array de números cantados en orden cronológico
@@ -15,9 +18,15 @@ const state = {
   drawTitle: 'SORTEO N° 001',
   currentTheme: 'clasico',
   fontScale: 100, // Escala de fuente (60 a 130)
-  soundEnabled: true,
+  soundEnabled: !isProjectorMode,
   audioCtx: null
 };
+
+// Canal Broadcast para sincronización ultra rápida entre ventanas
+let syncChannel = null;
+try {
+  syncChannel = new BroadcastChannel('bingho_dual_screen_sync');
+} catch (e) {}
 
 // ==========================================================================
 // 2. REFERENCIAS DOM
@@ -51,6 +60,8 @@ const DOM = {
   btnUndo: document.getElementById('btnUndo'),
 
   // Acciones y Herramientas del Sistema
+  btnProjectorToggle: document.getElementById('btnProjectorToggle'),
+  projectorBtnText: document.getElementById('projectorBtnText'),
   btnFullscreen: document.getElementById('btnFullscreen'),
   fullscreenText: document.getElementById('fullscreenText'),
   btnSoundToggle: document.getElementById('btnSoundToggle'),
@@ -66,10 +77,136 @@ const DOM = {
 };
 
 // ==========================================================================
-// 3. PERSISTENCIA TOTAL ANTE CRASH O CIERRE (LocalStorage)
+// 3. SINCRONIZACIÓN OPERADOR <-> PROYECTOR
+// ==========================================================================
+
+function broadcastState() {
+  if (isProjectorMode) return;
+  const payload = {
+    numerosSalidos: state.numerosSalidos,
+    isBingoMode: state.isBingoMode,
+    drawTitle: state.drawTitle,
+    currentTheme: state.currentTheme,
+    fontScale: state.fontScale
+  };
+  if (window.electronAPI && window.electronAPI.sendStateSync) {
+    window.electronAPI.sendStateSync(payload);
+  }
+  if (syncChannel) {
+    syncChannel.postMessage({ type: 'state-sync', payload });
+  }
+}
+
+function broadcastEvent(eventType, eventData = {}) {
+  if (isProjectorMode) return;
+  if (window.electronAPI && window.electronAPI.sendEventSync) {
+    window.electronAPI.sendEventSync({ eventType, eventData });
+  }
+  if (syncChannel) {
+    syncChannel.postMessage({ type: 'event-sync', eventType, eventData });
+  }
+}
+
+function applyExternalState(payload) {
+  if (!payload) return;
+
+  if (Array.isArray(payload.numerosSalidos)) {
+    state.numerosSalidos = [...payload.numerosSalidos];
+    refreshBoardFromState();
+  }
+
+  if (typeof payload.isBingoMode === 'boolean') {
+    state.isBingoMode = payload.isBingoMode;
+    if (DOM.auditStatusBadge) {
+      DOM.auditStatusBadge.style.display = state.isBingoMode ? 'flex' : 'none';
+    }
+    if (DOM.btnBingoToggle) {
+      if (state.isBingoMode) {
+        DOM.btnBingoToggle.classList.add('active');
+        DOM.btnBingoToggle.setAttribute('aria-pressed', 'true');
+        DOM.bingoStatusText.textContent = '● AUDITORÍA';
+      } else {
+        DOM.btnBingoToggle.classList.remove('active');
+        DOM.btnBingoToggle.setAttribute('aria-pressed', 'false');
+        DOM.bingoStatusText.textContent = 'SORTEO';
+      }
+    }
+    if (!state.isBingoMode) {
+      document.querySelectorAll('.cell-audit-valid, .cell-audit-invalid').forEach(c => {
+        c.classList.remove('cell-audit-valid', 'cell-audit-invalid');
+      });
+      if (DOM.auditToast) DOM.auditToast.style.display = 'none';
+    }
+  }
+
+  if (payload.drawTitle) {
+    state.drawTitle = payload.drawTitle;
+    if (DOM.drawTitleDisplay) DOM.drawTitleDisplay.textContent = payload.drawTitle;
+    if (DOM.drawTitleInput) DOM.drawTitleInput.value = payload.drawTitle;
+  }
+
+  if (payload.currentTheme && payload.currentTheme !== state.currentTheme) {
+    setTheme(payload.currentTheme, false);
+  }
+
+  if (typeof payload.fontScale === 'number') {
+    applyFontScale(payload.fontScale, false);
+  }
+}
+
+function applyExternalEvent(eventType, eventData = {}) {
+  if (eventType === 'number-drawn') {
+    const num = eventData.num;
+    const cell = document.getElementById(`cell-${num}`);
+    if (cell) {
+      cell.classList.add('just-entered');
+      setTimeout(() => {
+        if (cell) cell.classList.remove('just-entered');
+      }, 400);
+    }
+    if (DOM.currentNumberDisplay) {
+      DOM.currentNumberDisplay.classList.remove('number-pop');
+      void DOM.currentNumberDisplay.offsetWidth;
+      DOM.currentNumberDisplay.classList.add('number-pop');
+    }
+  } else if (eventType === 'number-audited') {
+    const { num, isValid, orderIndex } = eventData;
+    const cell = document.getElementById(`cell-${num}`);
+    if (isValid) {
+      if (cell) {
+        cell.classList.remove('cell-audit-invalid');
+        cell.classList.add('cell-audit-valid');
+      }
+      showAuditToast(true, `N° ${String(num).padStart(2, '0')} VÁLIDO`, `Fue el #${orderIndex} en salir`);
+    } else {
+      if (cell) {
+        cell.classList.remove('cell-audit-valid');
+        cell.classList.add('cell-audit-invalid');
+      }
+      showAuditToast(false, `N° ${String(num).padStart(2, '0')} NO SALIÓ`, `Número NO cantado en sorteo`);
+    }
+  } else if (eventType === 'game-reset') {
+    resetBoardUIOnly();
+  }
+}
+
+function updateProjectorButtonUI(isOpen) {
+  if (!DOM.btnProjectorToggle) return;
+  if (isOpen) {
+    DOM.btnProjectorToggle.classList.add('active');
+    if (DOM.projectorBtnText) DOM.projectorBtnText.textContent = 'Cerrar 2da Pantalla';
+  } else {
+    DOM.btnProjectorToggle.classList.remove('active');
+    if (DOM.projectorBtnText) DOM.projectorBtnText.textContent = 'Segunda Pantalla';
+  }
+}
+
+// ==========================================================================
+// 4. PERSISTENCIA TOTAL ANTE CRASH O CIERRE (LocalStorage)
 // ==========================================================================
 
 function saveState() {
+  if (isProjectorMode) return;
   try {
     const payload = {
       numerosSalidos: state.numerosSalidos,
@@ -95,20 +232,20 @@ function loadState() {
     }
     if (parsed.drawTitle) {
       state.drawTitle = parsed.drawTitle;
-      DOM.drawTitleInput.value = parsed.drawTitle;
-      DOM.drawTitleDisplay.textContent = parsed.drawTitle;
+      if (DOM.drawTitleInput) DOM.drawTitleInput.value = parsed.drawTitle;
+      if (DOM.drawTitleDisplay) DOM.drawTitleDisplay.textContent = parsed.drawTitle;
     }
     if (parsed.currentTheme) {
       state.currentTheme = parsed.currentTheme;
-      setTheme(parsed.currentTheme);
+      setTheme(parsed.currentTheme, false);
     }
     if (typeof parsed.fontScale === 'number') {
       state.fontScale = Math.max(60, Math.min(130, parsed.fontScale));
-      applyFontScale(state.fontScale);
+      applyFontScale(state.fontScale, false);
     } else {
-      applyFontScale(100);
+      applyFontScale(100, false);
     }
-    if (typeof parsed.soundEnabled === 'boolean') {
+    if (typeof parsed.soundEnabled === 'boolean' && !isProjectorMode) {
       state.soundEnabled = parsed.soundEnabled;
       updateSoundButtonUI();
     }
@@ -120,24 +257,29 @@ function loadState() {
 }
 
 function clearState() {
+  if (isProjectorMode) return;
   try {
     localStorage.removeItem(STORAGE_KEY);
   } catch (e) {}
 }
 
-function applyFontScale(val) {
+function applyFontScale(val, shouldBroadcast = true) {
   state.fontScale = val;
   const factor = (val / 100).toFixed(2);
   document.documentElement.style.setProperty('--font-scale', factor);
   if (DOM.fontSizeSlider) DOM.fontSizeSlider.value = val;
   if (DOM.fontSizeValue) DOM.fontSizeValue.textContent = `${val}%`;
+  if (shouldBroadcast) {
+    broadcastState();
+  }
 }
 
 // ==========================================================================
-// 4. SINTETIZADOR DE AUDIO (Web Audio API)
+// 5. SINTETIZADOR DE AUDIO (Web Audio API)
 // ==========================================================================
 
 function getAudioContext() {
+  if (isProjectorMode) return null;
   if (!state.audioCtx) {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (AudioContext) {
@@ -151,7 +293,7 @@ function getAudioContext() {
 }
 
 function playTone(freq, type = 'sine', duration = 0.15, delay = 0) {
-  if (!state.soundEnabled) return;
+  if (isProjectorMode || !state.soundEnabled) return;
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
@@ -189,7 +331,7 @@ function playAuditInvalidSound() {
 }
 
 // ==========================================================================
-// 5. INICIALIZACIÓN DEL TABLERO (1 al 90 - BLOQUEADO A CLIC DIRECTO)
+// 6. INICIALIZACIÓN Y RENDERIZADO DEL TABLERO
 // ==========================================================================
 
 function initBoard() {
@@ -204,7 +346,17 @@ function initBoard() {
     DOM.bingoBoard.appendChild(cell);
   }
 
-  // Restaurar celdas según el estado persistido
+  refreshBoardFromState();
+  if (!isProjectorMode) {
+    refocusInput();
+  }
+}
+
+function refreshBoardFromState() {
+  document.querySelectorAll('.bingo-cell').forEach(cell => {
+    cell.classList.remove('active', 'last-active');
+  });
+
   if (state.numerosSalidos.length > 0) {
     state.numerosSalidos.forEach((num, index) => {
       const cell = document.getElementById(`cell-${num}`);
@@ -223,14 +375,14 @@ function initBoard() {
 
   updateStats();
   updateHistory();
-  refocusInput();
 }
 
 // ==========================================================================
-// 6. LÓGICA DE SORTEO Y ENTRADA DE NÚMEROS
+// 7. LÓGICA DE SORTEO Y ENTRADA DE NÚMEROS
 // ==========================================================================
 
 function handleNumberSubmit() {
+  if (isProjectorMode || !DOM.numberInput) return;
   const value = parseInt(DOM.numberInput.value.trim(), 10);
   
   if (isNaN(value) || value < 1 || value > 90) {
@@ -258,7 +410,7 @@ function drawNumber(num) {
     return;
   }
 
-  // Quitar la clase del último número anterior (sin animar)
+  // Quitar la clase del último número anterior
   if (state.numerosSalidos.length > 0) {
     const prevLast = state.numerosSalidos[state.numerosSalidos.length - 1];
     const prevCell = document.getElementById(`cell-${prevLast}`);
@@ -289,6 +441,10 @@ function drawNumber(num) {
   updateStats();
   updateHistory();
   saveState();
+
+  // Sincronizar con la segunda pantalla
+  broadcastEvent('number-drawn', { num });
+  broadcastState();
 }
 
 function highlightCell(num) {
@@ -302,10 +458,11 @@ function highlightCell(num) {
 }
 
 // ==========================================================================
-// 7. CORRECCIÓN DE ERRORES INLINE (SIN MODAL INTERRUPTIVO)
+// 8. CORRECCIÓN DE ERRORES INLINE (SIN MODAL INTERRUPTIVO)
 // ==========================================================================
 
 function handleInlineRemoveNumber() {
+  if (isProjectorMode || !DOM.removeInlineInput) return;
   const num = parseInt(DOM.removeInlineInput.value.trim(), 10);
   
   if (isNaN(num) || num < 1 || num > 90) {
@@ -350,11 +507,12 @@ function handleInlineRemoveNumber() {
   updateStats();
   updateHistory();
   saveState();
+  broadcastState();
   refocusInput();
 }
 
 function undoLastNumber() {
-  if (state.numerosSalidos.length === 0) return;
+  if (isProjectorMode || state.numerosSalidos.length === 0) return;
 
   const removedNum = state.numerosSalidos.pop();
   const cell = document.getElementById(`cell-${removedNum}`);
@@ -376,48 +534,56 @@ function undoLastNumber() {
   updateStats();
   updateHistory();
   saveState();
+  broadcastState();
   refocusInput();
 }
 
 // ==========================================================================
-// 8. MODO BINGO (AUDITORÍA PERSISTENTE CON ZOOM VERDE / ROJO)
+// 9. MODO BINGO (AUDITORÍA PERSISTENTE CON ZOOM VERDE / ROJO)
 // ==========================================================================
 
 function toggleBingoMode() {
+  if (isProjectorMode) return;
   state.isBingoMode = !state.isBingoMode;
 
   if (state.isBingoMode) {
-    DOM.btnBingoToggle.classList.add('active');
-    DOM.btnBingoToggle.setAttribute('aria-pressed', 'true');
-    DOM.bingoStatusText.textContent = '● AUDITORÍA';
-    DOM.auditStatusBadge.style.display = 'flex';
-    DOM.inputLabel.textContent = 'AUDITAR N°';
-    DOM.inputHint.textContent = 'Ingrese N° para auditar en cartón';
-    DOM.numberInput.placeholder = '??';
+    if (DOM.btnBingoToggle) {
+      DOM.btnBingoToggle.classList.add('active');
+      DOM.btnBingoToggle.setAttribute('aria-pressed', 'true');
+      DOM.bingoStatusText.textContent = '● AUDITORÍA';
+    }
+    if (DOM.auditStatusBadge) DOM.auditStatusBadge.style.display = 'flex';
+    if (DOM.inputLabel) DOM.inputLabel.textContent = 'AUDITAR N°';
+    if (DOM.inputHint) DOM.inputHint.textContent = 'Ingrese N° para auditar en cartón';
+    if (DOM.numberInput) DOM.numberInput.placeholder = '??';
   } else {
-    DOM.btnBingoToggle.classList.remove('active');
-    DOM.btnBingoToggle.setAttribute('aria-pressed', 'false');
-    DOM.bingoStatusText.textContent = 'SORTEO';
-    DOM.auditStatusBadge.style.display = 'none';
-    DOM.inputLabel.textContent = 'NÚMERO (1-90)';
-    DOM.inputHint.textContent = 'Presione [Enter]';
-    DOM.numberInput.placeholder = '00';
-    DOM.auditToast.style.display = 'none';
+    if (DOM.btnBingoToggle) {
+      DOM.btnBingoToggle.classList.remove('active');
+      DOM.btnBingoToggle.setAttribute('aria-pressed', 'false');
+      DOM.bingoStatusText.textContent = 'SORTEO';
+    }
+    if (DOM.auditStatusBadge) DOM.auditStatusBadge.style.display = 'none';
+    if (DOM.inputLabel) DOM.inputLabel.textContent = 'NÚMERO (1-90)';
+    if (DOM.inputHint) DOM.inputHint.textContent = 'Presione [Enter]';
+    if (DOM.numberInput) DOM.numberInput.placeholder = '00';
+    if (DOM.auditToast) DOM.auditToast.style.display = 'none';
 
     document.querySelectorAll('.cell-audit-valid, .cell-audit-invalid').forEach(c => {
       c.classList.remove('cell-audit-valid', 'cell-audit-invalid');
     });
   }
 
+  broadcastState();
   refocusInput();
 }
 
 function auditNumber(num) {
   const exists = state.numerosSalidos.includes(num);
   const cell = document.getElementById(`cell-${num}`);
+  let orderIndex = 0;
 
   if (exists) {
-    const orderIndex = state.numerosSalidos.indexOf(num) + 1;
+    orderIndex = state.numerosSalidos.indexOf(num) + 1;
     
     if (cell) {
       cell.classList.remove('cell-audit-invalid');
@@ -436,9 +602,12 @@ function auditNumber(num) {
     showAuditToast(false, `N° ${String(num).padStart(2, '0')} NO SALIÓ`, `Número NO cantado en sorteo`);
     playAuditInvalidSound();
   }
+
+  broadcastEvent('number-audited', { num, isValid: exists, orderIndex });
 }
 
 function showAuditToast(isValid, title, desc) {
+  if (!DOM.auditToast) return;
   DOM.auditToast.style.display = 'flex';
   DOM.auditToast.className = `audit-toast ${isValid ? 'valid' : 'invalid'}`;
   DOM.auditToastIcon.textContent = isValid ? '✅' : '❌';
@@ -447,28 +616,33 @@ function showAuditToast(isValid, title, desc) {
 
   clearTimeout(showAuditToast._timeout);
   showAuditToast._timeout = setTimeout(() => {
-    DOM.auditToast.style.display = 'none';
+    if (DOM.auditToast) DOM.auditToast.style.display = 'none';
   }, 4000);
 }
 
 // ==========================================================================
-// 9. GESTIÓN DE TEMAS Y PANTALLA COMPLETA
+// 10. GESTIÓN DE TEMAS, PANTALLA COMPLETA & SEGUNDA PANTALLA
 // ==========================================================================
 
-function setTheme(themeName) {
+function setTheme(themeName, shouldBroadcast = true) {
   state.currentTheme = themeName;
   document.documentElement.setAttribute('data-theme', themeName);
-  document.body.className = `theme-${themeName}`;
+  document.body.className = `${isProjectorMode ? 'projector-mode ' : ''}theme-${themeName}`;
 
-  DOM.themeButtons.forEach(btn => {
-    if (btn.dataset.theme === themeName) {
-      btn.classList.add('active');
-    } else {
-      btn.classList.remove('active');
-    }
-  });
+  if (DOM.themeButtons) {
+    DOM.themeButtons.forEach(btn => {
+      if (btn.dataset.theme === themeName) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+  }
 
   saveState();
+  if (shouldBroadcast) {
+    broadcastState();
+  }
 }
 
 async function toggleFullScreen() {
@@ -483,7 +657,15 @@ async function toggleFullScreen() {
   }
 }
 
+async function toggleProjector() {
+  if (window.electronAPI && window.electronAPI.toggleProjector) {
+    const isOpen = await window.electronAPI.toggleProjector();
+    updateProjectorButtonUI(isOpen);
+  }
+}
+
 function updateFullscreenButton(isFull) {
+  if (!DOM.fullscreenText) return;
   if (isFull) {
     DOM.fullscreenText.textContent = 'Salir Fullscreen';
   } else {
@@ -500,56 +682,71 @@ if (window.electronAPI && window.electronAPI.onFullScreenChange) {
 }
 
 function updateSoundButtonUI() {
+  if (!DOM.soundIcon || !DOM.soundText) return;
   DOM.soundIcon.textContent = state.soundEnabled ? '🔊' : '🔇';
   DOM.soundText.textContent = state.soundEnabled ? 'Sonido: ON' : 'Sonido: OFF';
 }
 
 // ==========================================================================
-// 10. REINICIO DE SORTEO (NUEVO SORTEO)
+// 11. REINICIO DE SORTEO (NUEVO SORTEO)
 // ==========================================================================
 
 function showResetConfirmation() {
+  if (isProjectorMode) return;
   DOM.confirmModalOverlay.classList.add('show');
 }
 
 function hideResetConfirmation() {
+  if (isProjectorMode) return;
   DOM.confirmModalOverlay.classList.remove('show');
   refocusInput();
 }
 
-function resetGame() {
-  state.numerosSalidos = [];
-  
+function resetBoardUIOnly() {
   document.querySelectorAll('.bingo-cell').forEach(cell => {
     cell.classList.remove('active', 'last-active', 'cell-audit-valid', 'cell-audit-invalid');
   });
-
   DOM.currentNumberDisplay.textContent = '--';
-  DOM.numberInput.value = '';
+  if (DOM.auditToast) DOM.auditToast.style.display = 'none';
+  if (DOM.auditStatusBadge) DOM.auditStatusBadge.style.display = 'none';
+  updateStats();
+  updateHistory();
+}
+
+function resetGame() {
+  if (isProjectorMode) return;
+  state.numerosSalidos = [];
+  
+  resetBoardUIOnly();
+
+  if (DOM.numberInput) DOM.numberInput.value = '';
   if (DOM.removeInlineInput) DOM.removeInlineInput.value = '';
 
   if (state.isBingoMode) {
     toggleBingoMode();
   }
 
-  updateStats();
-  updateHistory();
   clearState();
   saveState();
+  broadcastEvent('game-reset', {});
+  broadcastState();
   hideResetConfirmation();
   refocusInput();
 }
 
 // ==========================================================================
-// 11. ACTUALIZACIÓN DE ESTADÍSTICAS E HISTORIAL
+// 12. ACTUALIZACIÓN DE ESTADÍSTICAS E HISTORIAL
 // ==========================================================================
 
 function updateStats() {
   const count = state.numerosSalidos.length;
-  DOM.statCounter.textContent = `${count} / 90`;
+  if (DOM.statCounter) {
+    DOM.statCounter.textContent = `${count} / 90`;
+  }
 }
 
 function updateHistory() {
+  if (!DOM.historyChips) return;
   if (state.numerosSalidos.length === 0) {
     DOM.historyChips.innerHTML = '<span class="history-empty">Esperando sorteo...</span>';
     return;
@@ -567,14 +764,16 @@ function updateHistory() {
 }
 
 function refocusInput() {
+  if (isProjectorMode) return;
   setTimeout(() => {
-    if (!DOM.confirmModalOverlay.classList.contains('show')) {
+    if (DOM.confirmModalOverlay && !DOM.confirmModalOverlay.classList.contains('show') && DOM.numberInput) {
       DOM.numberInput.focus();
     }
   }, 40);
 }
 
 function showInputShake(element) {
+  if (!element) return;
   element.style.borderColor = '#ff4d4f';
   element.style.boxShadow = '0 0 12px rgba(255, 77, 79, 0.8)';
   setTimeout(() => {
@@ -584,71 +783,91 @@ function showInputShake(element) {
 }
 
 // ==========================================================================
-// 12. EVENT LISTENERS
+// 13. EVENT LISTENERS
 // ==========================================================================
 
-// Enviar número con Enter o botón
-DOM.btnSubmitNumber.addEventListener('click', handleNumberSubmit);
-DOM.numberInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    handleNumberSubmit();
+if (!isProjectorMode) {
+  // Enviar número con Enter o botón
+  if (DOM.btnSubmitNumber) DOM.btnSubmitNumber.addEventListener('click', handleNumberSubmit);
+  if (DOM.numberInput) {
+    DOM.numberInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleNumberSubmit();
+      }
+    });
   }
-});
 
-// Slider de Tamaño de Fuente (60% a 100%)
-DOM.fontSizeSlider.addEventListener('input', (e) => {
-  const val = parseInt(e.target.value, 10) || 85;
-  applyFontScale(val);
-  saveState();
-});
-
-// Sincronizar input del título del sorteo desde la barra lateral
-DOM.drawTitleInput.addEventListener('input', (e) => {
-  const val = e.target.value.toUpperCase();
-  state.drawTitle = val || 'SORTEO N° 001';
-  DOM.drawTitleDisplay.textContent = state.drawTitle;
-  saveState();
-});
-
-// Quitar número inline (corrección sin modal)
-DOM.btnRemoveInline.addEventListener('click', handleInlineRemoveNumber);
-DOM.removeInlineInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    handleInlineRemoveNumber();
+  // Slider de Tamaño de Fuente (60% a 130%)
+  if (DOM.fontSizeSlider) {
+    DOM.fontSizeSlider.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value, 10) || 100;
+      applyFontScale(val);
+      saveState();
+    });
   }
-});
 
-// Deshacer último número
-DOM.btnUndo.addEventListener('click', undoLastNumber);
+  // Título del sorteo
+  if (DOM.drawTitleInput) {
+    DOM.drawTitleInput.addEventListener('input', (e) => {
+      const val = e.target.value.toUpperCase();
+      state.drawTitle = val || 'SORTEO N° 001';
+      DOM.drawTitleDisplay.textContent = state.drawTitle;
+      saveState();
+      broadcastState();
+    });
+  }
 
-// Toggle BINGO!
-DOM.btnBingoToggle.addEventListener('click', toggleBingoMode);
+  // Quitar número inline
+  if (DOM.btnRemoveInline) DOM.btnRemoveInline.addEventListener('click', handleInlineRemoveNumber);
+  if (DOM.removeInlineInput) {
+    DOM.removeInlineInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleInlineRemoveNumber();
+      }
+    });
+  }
 
-// Temas
-DOM.themeButtons.forEach(btn => {
-  btn.addEventListener('click', () => {
-    setTheme(btn.dataset.theme);
-    refocusInput();
-  });
-});
+  // Deshacer último número
+  if (DOM.btnUndo) DOM.btnUndo.addEventListener('click', undoLastNumber);
 
-// Pantalla Completa
-DOM.btnFullscreen.addEventListener('click', toggleFullScreen);
+  // Toggle BINGO!
+  if (DOM.btnBingoToggle) DOM.btnBingoToggle.addEventListener('click', toggleBingoMode);
 
-// Sonido
-DOM.btnSoundToggle.addEventListener('click', () => {
-  state.soundEnabled = !state.soundEnabled;
-  updateSoundButtonUI();
-  saveState();
-  refocusInput();
-});
+  // Selector de Temas
+  if (DOM.themeButtons) {
+    DOM.themeButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        setTheme(btn.dataset.theme);
+        refocusInput();
+      });
+    });
+  }
 
-// Reinicio de Sorteo
-DOM.btnReset.addEventListener('click', showResetConfirmation);
-DOM.btnCancelReset.addEventListener('click', hideResetConfirmation);
-DOM.btnConfirmReset.addEventListener('click', resetGame);
+  // Botón Segunda Pantalla (Proyector)
+  if (DOM.btnProjectorToggle) {
+    DOM.btnProjectorToggle.addEventListener('click', toggleProjector);
+  }
+
+  // Pantalla Completa
+  if (DOM.btnFullscreen) DOM.btnFullscreen.addEventListener('click', toggleFullScreen);
+
+  // Sonido
+  if (DOM.btnSoundToggle) {
+    DOM.btnSoundToggle.addEventListener('click', () => {
+      state.soundEnabled = !state.soundEnabled;
+      updateSoundButtonUI();
+      saveState();
+      refocusInput();
+    });
+  }
+
+  // Reinicio de Sorteo
+  if (DOM.btnReset) DOM.btnReset.addEventListener('click', showResetConfirmation);
+  if (DOM.btnCancelReset) DOM.btnCancelReset.addEventListener('click', hideResetConfirmation);
+  if (DOM.btnConfirmReset) DOM.btnConfirmReset.addEventListener('click', resetGame);
+}
 
 // Atajos Globales de Teclado
 window.addEventListener('keydown', (e) => {
@@ -656,32 +875,76 @@ window.addEventListener('keydown', (e) => {
     e.preventDefault();
     toggleFullScreen();
   }
+
+  if (e.key === 'F10' && !isProjectorMode) {
+    e.preventDefault();
+    toggleProjector();
+  }
   
   if (e.key === 'Escape') {
-    if (DOM.confirmModalOverlay.classList.contains('show')) {
+    if (DOM.confirmModalOverlay && DOM.confirmModalOverlay.classList.contains('show')) {
       hideResetConfirmation();
     }
   }
 
   // Ctrl+B o Alt+B para alternar modo BINGO
-  if ((e.ctrlKey || e.altKey) && (e.key === 'b' || e.key === 'B')) {
+  if (!isProjectorMode && (e.ctrlKey || e.altKey) && (e.key === 'b' || e.key === 'B')) {
     e.preventDefault();
     toggleBingoMode();
   }
 });
 
 // ==========================================================================
-// 13. INICIO
+// 14. INICIO Y ESCUCHA DE SINCRONIZACIÓN
 // ==========================================================================
+
 window.addEventListener('DOMContentLoaded', () => {
+  if (isProjectorMode) {
+    document.body.classList.add('projector-mode');
+    document.title = 'BingHo - Pantalla de Proyección';
+  }
+
   loadState();
   initBoard();
 
-  const unlockAudio = () => {
-    getAudioContext();
-    window.removeEventListener('click', unlockAudio);
-    window.removeEventListener('keydown', unlockAudio);
-  };
-  window.addEventListener('click', unlockAudio);
-  window.addEventListener('keydown', unlockAudio);
+  // Configurar listeners de sincronización IPC
+  if (window.electronAPI) {
+    if (window.electronAPI.onStateSync) {
+      window.electronAPI.onStateSync((payload) => applyExternalState(payload));
+    }
+    if (window.electronAPI.onEventSync) {
+      window.electronAPI.onEventSync((evt) => applyExternalEvent(evt.eventType, evt.eventData));
+    }
+    if (!isProjectorMode && window.electronAPI.onProjectorStatusChange) {
+      window.electronAPI.onProjectorStatusChange((isOpen) => updateProjectorButtonUI(isOpen));
+      if (window.electronAPI.isProjectorOpen) {
+        window.electronAPI.isProjectorOpen().then(updateProjectorButtonUI);
+      }
+    }
+  }
+
+  // Configurar listeners de sincronización BroadcastChannel
+  if (syncChannel) {
+    syncChannel.onmessage = (e) => {
+      const msg = e.data;
+      if (!msg) return;
+      if (msg.type === 'state-sync') {
+        applyExternalState(msg.payload);
+      } else if (msg.type === 'event-sync') {
+        applyExternalEvent(msg.eventType, msg.data);
+      }
+    };
+  }
+
+  // Si no es proyector, desbloquear audio en el primer clic/tecla
+  if (!isProjectorMode) {
+    const unlockAudio = () => {
+      getAudioContext();
+      window.removeEventListener('click', unlockAudio);
+      window.removeEventListener('keydown', unlockAudio);
+    };
+    window.addEventListener('click', unlockAudio);
+    window.addEventListener('keydown', unlockAudio);
+  }
 });
+

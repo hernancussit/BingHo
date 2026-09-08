@@ -7,5 +7,24 @@ contextBridge.exposeInMainWorld('electronAPI', {
   quitApp: () => ipcRenderer.invoke('quit-app'),
   onFullScreenChange: (callback) => {
     ipcRenderer.on('fullscreen-change', (_event, isFullScreen) => callback(isFullScreen));
+  },
+  
+  // APIs de Segunda Pantalla / Proyector
+  toggleProjector: () => ipcRenderer.invoke('toggle-projector'),
+  isProjectorOpen: () => ipcRenderer.invoke('is-projector-open'),
+  closeProjector: () => ipcRenderer.invoke('close-projector'),
+  onProjectorStatusChange: (callback) => {
+    ipcRenderer.on('projector-status-change', (_event, isOpen) => callback(isOpen));
+  },
+  
+  // Sincronización entre ventanas (Operador <-> Proyector)
+  sendStateSync: (stateData) => ipcRenderer.send('sync-projector-state', stateData),
+  onStateSync: (callback) => {
+    ipcRenderer.on('projector-state-updated', (_event, stateData) => callback(stateData));
+  },
+  sendEventSync: (eventData) => ipcRenderer.send('sync-projector-event', eventData),
+  onEventSync: (callback) => {
+    ipcRenderer.on('projector-event-received', (_event, eventData) => callback(eventData));
   }
 });
+

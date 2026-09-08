@@ -30,6 +30,11 @@ Aplicación para la gestión, control y proyección en vivo de tableros de Bingo
 - **Protección del Tablero**: Las celdas del tablero central están bloqueadas a clics directos para evitar modificaciones accidentales.
 - **Persistencia Automática (Anti-Cierre)**: El estado del sorteo y los números cantados se guardan continuamente; si la aplicación se cierra por accidente, se reanuda exactamente donde quedó.
 - **Efectos de Sonido**: Tonos sintetizados para el sorteo y la auditoría (con opción de silencio).
+- **Modo Segunda Pantalla (Proyector / Pantalla Extendida)**:
+  - Permite proyectar en un segundo monitor, proyector o pantalla gigante LED en modo escritorio extendido de Windows.
+  - La pantalla de proyección muestra únicamente el panel informativo y el tablero 1-90 maximizados al 100% del espacio disponible, ocultando por completo los controles del operador.
+  - Sincronización en tiempo real sin latencia entre el operador y el proyector.
+  - Apertura y cierre rápido con un solo clic o con el atajo `F10`.
 - **Modo Pantalla Completa**: Alternancia fluida con la tecla `F11`.
 
 ---
@@ -39,6 +44,7 @@ Aplicación para la gestión, control y proyección en vivo de tableros de Bingo
 | Tecla | Acción |
 | :--- | :--- |
 | `[Enter]` | Cantar número (en Sorteo) o Validar número (en Auditoría) |
+| `[F10]` | Abrir / Cerrar Modo Segunda Pantalla (Proyector) |
 | `[F11]` | Alternar Pantalla Completa |
 | `[Ctrl + B]` | Entrar / Salir del Modo Auditoría BINGO |
 | `[Esc]` | Cerrar cuadros de confirmación |
