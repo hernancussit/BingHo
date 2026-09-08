@@ -4,10 +4,15 @@ $ErrorActionPreference = "Stop"
 Write-Host ">>> Paso 1: Generando empaquetado base de Electron (BingHo)..." -ForegroundColor Cyan
 & "C:\Program Files\nodejs\npm.cmd" run package:win
 
+$pkg = Get-Content "package.json" -Raw | ConvertFrom-Json
+$appVersion = $pkg.version
+$cleanVer = ($appVersion -split '-')[0]
+$assemblyVer = if ($cleanVer -match '^\d+\.\d+\.\d+$') { "$cleanVer.0" } else { "1.0.0.0" }
+
 $distPath = "dist\BingHo-win32-x64"
 $zipPath = "dist\app_payload.zip"
 $portableExe = "dist\BingHo.exe"
-$releaseZip = "dist\BingHo-v0.9.1-beta-Windows-x64.zip"
+$releaseZip = "dist\BingHo-v$appVersion-Windows-x64.zip"
 $sourceFile = "dist\Launcher.cs"
 $iconPath = "icon.ico"
 $buildId = [Guid]::NewGuid().ToString()
@@ -16,7 +21,7 @@ Write-Host ">>> Paso 2: Creando archivo comprimido de la aplicación..." -Foregr
 if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
 Compress-Archive -Path "$distPath\*" -DestinationPath $zipPath -CompressionLevel Fastest -Force
 
-Write-Host ">>> Paso 3: Generando código del lanzador portable con metadatos completos de Windows (Build ID: $buildId)..." -ForegroundColor Cyan
+Write-Host ">>> Paso 3: Generando código del lanzador portable con metadatos completos de Windows (Build ID: $buildId, Ver: $assemblyVer)..." -ForegroundColor Cyan
 $csharpCode = @"
 using System;
 using System.Diagnostics;
@@ -35,8 +40,8 @@ using System.Windows.Forms;
 [assembly: AssemblyTrademark("BingHo")]
 [assembly: AssemblyCulture("")]
 [assembly: ComVisible(false)]
-[assembly: AssemblyVersion("0.9.1.0")]
-[assembly: AssemblyFileVersion("0.9.1.0")]
+[assembly: AssemblyVersion("$assemblyVer")]
+[assembly: AssemblyFileVersion("$assemblyVer")]
 
 namespace BingHo
 {
