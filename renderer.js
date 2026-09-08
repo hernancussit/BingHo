@@ -103,7 +103,8 @@ const DOM = {
   updateProgressSize: document.getElementById('updateProgressSize'),
   btnCancelUpdate: document.getElementById('btnCancelUpdate'),
   btnManualDownload: document.getElementById('btnManualDownload'),
-  btnDownloadUpdate: document.getElementById('btnDownloadUpdate')
+  btnDownloadUpdate: document.getElementById('btnDownloadUpdate'),
+  btnDonationCafecito: document.getElementById('btnDonationCafecito')
 };
 
 let updateDownloadUrl = '';
@@ -1237,6 +1238,19 @@ if (!isProjectorMode) {
     DOM.btnCancelUpdate.addEventListener('click', () => {
       DOM.updateModalOverlay.classList.remove('show');
       refocusInput();
+    });
+  }
+
+  // Enlace a Donación de Cafecito
+  if (DOM.btnDonationCafecito) {
+    DOM.btnDonationCafecito.addEventListener('click', (e) => {
+      e.preventDefault();
+      const cafecitoUrl = 'https://cafecito.app/henu_45';
+      if (window.electronAPI && window.electronAPI.openExternalUrl) {
+        window.electronAPI.openExternalUrl(cafecitoUrl);
+      } else {
+        window.open(cafecitoUrl, '_blank');
+      }
     });
   }
 

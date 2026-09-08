@@ -1066,6 +1066,28 @@ body {
   font-weight: 800;
 }
 
+.btn-cafecito-link {
+  display: inline-block;
+  background: rgba(255, 129, 63, 0.15);
+  border: 1px solid rgba(255, 129, 63, 0.4);
+  color: #ff813f;
+  text-decoration: none;
+  font-size: clamp(8px, 0.85vmin, 10px);
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-top: 2px;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 8px rgba(255, 129, 63, 0.2);
+}
+
+.btn-cafecito-link:hover {
+  background: #ff813f;
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(255, 129, 63, 0.6);
+  transform: translateY(-1px);
+}
+
 /* ==========================================================================
    7. MODAL DE CONFIRMACIÓN
    ========================================================================== */
