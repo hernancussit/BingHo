@@ -1,4 +1,4 @@
-# 🎱 BingHo
+# 🎟️ BingHo
 
 [![GitHub Release](https://img.shields.io/github/v/release/hernancussit/BingHo?color=00ff66&label=Versi%C3%B3n)](https://github.com/hernancussit/BingHo/releases)
 [![Platform](https://img.shields.io/badge/Plataforma-Windows%2010%20%7C%2011%20(x64)-00d2ff)](https://github.com/hernancussit/BingHo/releases)
@@ -7,7 +7,11 @@
 
 **BingHo** es un sistema profesional, moderno y gratuito para la gestión, control y proyección en tiempo real de tableros de Bingo (números del 1 al 90). Diseñado específicamente para eventos presenciales, salones de fiestas, festivales, clubes deportivos, peñas benéficas, escuelas, transmisiones en vivo (streaming) y pantallas LED de gran formato.
 
-![BingHo - Tablero de Bingo](preview.png)
+### 🎮 Tablero Principal y Control de Sorteo
+![BingHo - Tablero de Control y Sorteo en Vivo](preview.png)
+
+### 🏆 Celebración y Festejo de Cartón Ganador
+![BingHo - Celebración de Cartón Ganador](preview_winner.png)
 
 ---
 
