@@ -186,12 +186,30 @@ body {
   gap: 4px;
 }
 
+.draw-header-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .badge-live {
   font-size: clamp(9px, 1.1vmin, 12px);
   font-weight: 900;
   letter-spacing: 1.5px;
   color: #ff3344;
   animation: liveBlink 1.8s infinite ease-in-out;
+}
+
+.draw-version-badge {
+  font-family: 'Chakra Petch', monospace;
+  font-size: clamp(8.5px, 0.95vmin, 11px);
+  font-weight: 800;
+  color: var(--accent-color);
+  background: rgba(0, 210, 255, 0.12);
+  border: 1px solid rgba(0, 210, 255, 0.3);
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
 }
 
 @keyframes liveBlink {
@@ -583,15 +601,52 @@ body {
 .panel-top-title {
   text-align: center;
   border-bottom: 1px solid var(--border-color);
-  padding-bottom: 4px;
+  padding-bottom: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.panel-branding-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .panel-title {
   font-family: 'Chakra Petch', sans-serif;
-  font-size: clamp(16px, 2vmin, 22px);
+  font-size: clamp(16px, 2.2vmin, 24px);
   font-weight: 900;
   letter-spacing: 1.5px;
   color: var(--accent-color);
+  line-height: 1;
+  margin: 0;
+}
+
+.app-version-badge {
+  background: rgba(0, 210, 255, 0.15);
+  border: 1px solid rgba(0, 210, 255, 0.4);
+  color: var(--accent-color);
+  font-family: 'Chakra Petch', monospace;
+  font-size: clamp(9px, 1vmin, 11px);
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+
+.panel-author-credit {
+  font-size: clamp(8.5px, 0.9vmin, 10.5px);
+  color: var(--text-secondary);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.panel-author-credit b {
+  color: #ffd700;
+  font-weight: 800;
 }
 
 .control-group {
@@ -981,10 +1036,34 @@ body {
 
 .panel-hint-footer {
   text-align: center;
-  font-size: clamp(8px, 0.85vmin, 10px);
-  color: var(--text-muted);
   border-top: 1px solid var(--border-color);
-  padding-top: 4px;
+  padding-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.footer-shortcuts {
+  font-size: clamp(7.5px, 0.8vmin, 9.5px);
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+
+.footer-credits {
+  font-size: clamp(8px, 0.85vmin, 10px);
+  color: var(--text-secondary);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.footer-credits span {
+  font-family: 'Chakra Petch', monospace;
+  color: var(--accent-color);
+}
+
+.footer-credits b {
+  color: #00ff66;
+  font-weight: 800;
 }
 
 /* ==========================================================================

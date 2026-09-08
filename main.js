@@ -73,7 +73,7 @@ function createWindow() {
     minHeight: 600,
     backgroundColor: '#060b18',
     autoHideMenuBar: true,
-    title: 'BingHo - Tablero 1 al 90 (Operador)',
+    title: `BingHo v${packageJson.version} - Por Hernán Cussit (Operador)`,
     icon: path.join(__dirname, process.platform === 'win32' ? 'icon.ico' : 'icon.png'),
     show: false,
     webPreferences: {
@@ -140,7 +140,7 @@ function openProjectorWindow() {
   const windowOptions = {
     backgroundColor: '#060b18',
     autoHideMenuBar: true,
-    title: 'BingHo - Pantalla de Proyección',
+    title: `BingHo v${packageJson.version} - Pantalla de Proyección`,
     icon: path.join(__dirname, process.platform === 'win32' ? 'icon.ico' : 'icon.png'),
     show: false,
     webPreferences: {
@@ -274,6 +274,15 @@ ipcMain.on('sync-projector-event', (event, eventData) => {
   if (projectorWindow && !projectorWindow.isDestroyed() && event.sender !== projectorWindow.webContents) {
     projectorWindow.webContents.send('projector-event-received', eventData);
   }
+});
+
+// Información de versión y autor
+ipcMain.handle('get-app-info', () => {
+  return {
+    version: packageJson.version,
+    author: 'Hernán Cussit',
+    title: `BingHo v${packageJson.version}`
+  };
 });
 
 // Comprobación de actualizaciones vía GitHub Releases

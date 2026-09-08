@@ -86,6 +86,11 @@ const DOM = {
   winnerSubtitle: document.getElementById('winnerSubtitle'),
   btnCloseWinner: document.getElementById('btnCloseWinner'),
 
+  // Versión y Créditos
+  leftBarVersionBadge: document.getElementById('leftBarVersionBadge'),
+  appVersionBadge: document.getElementById('appVersionBadge'),
+  footerVersionText: document.getElementById('footerVersionText'),
+
   // Modal de Actualizaciones desde GitHub
   updateModalOverlay: document.getElementById('updateModalOverlay'),
   updateModalIcon: document.getElementById('updateModalIcon'),
@@ -1403,7 +1408,24 @@ window.addEventListener('keydown', (e) => {
 window.addEventListener('DOMContentLoaded', () => {
   if (isProjectorMode) {
     document.body.classList.add('projector-mode');
-    document.title = 'BingHo - Pantalla de Proyección';
+    document.title = 'BingHo v0.9.5-beta - Pantalla de Proyección';
+  } else {
+    document.title = 'BingHo v0.9.5-beta - Por Hernán Cussit';
+  }
+
+  // Cargar versión y créditos dinámicamente desde el backend si está disponible
+  if (window.electronAPI && window.electronAPI.getAppInfo) {
+    window.electronAPI.getAppInfo().then(info => {
+      if (info && info.version) {
+        const titleStr = isProjectorMode 
+          ? `BingHo v${info.version} - Pantalla de Proyección` 
+          : `BingHo v${info.version} - Por ${info.author || 'Hernán Cussit'}`;
+        document.title = titleStr;
+        if (DOM.leftBarVersionBadge) DOM.leftBarVersionBadge.textContent = `v${info.version}`;
+        if (DOM.appVersionBadge) DOM.appVersionBadge.textContent = `v${info.version}`;
+        if (DOM.footerVersionText) DOM.footerVersionText.textContent = `v${info.version}`;
+      }
+    }).catch(() => {});
   }
 
   loadState();

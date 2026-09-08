@@ -71,6 +71,12 @@ Aplicación para la gestión, control y proyección en vivo de tableros de Bingo
 
 ---
 
+## 👤 Autor y Créditos
+
+Desarrollado con ❤️ por **Hernán Cussit** ([@hernancussit](https://github.com/hernancussit)).
+
+---
+
 ## 📄 Licencia
 
 Este proyecto está bajo la Licencia **[MIT](LICENSE)**.

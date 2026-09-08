@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleFullScreen: () => ipcRenderer.invoke('toggle-fullscreen'),
   isFullScreen: () => ipcRenderer.invoke('is-fullscreen'),
   quitApp: () => ipcRenderer.invoke('quit-app'),
+  getAppInfo: () => ipcRenderer.invoke('get-app-info'),
   onFullScreenChange: (callback) => {
     ipcRenderer.on('fullscreen-change', (_event, isFullScreen) => callback(isFullScreen));
   },
