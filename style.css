@@ -209,45 +209,6 @@ body {
   display: none;
 }
 
-/* Pie con Enlace a GitHub de la Versión en Barra Izquierda */
-.left-bar-footer {
-  margin-top: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-top: 4px;
-  border-top: 1px solid var(--border-color);
-}
-
-.left-bar-version-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-family: 'Chakra Petch', monospace;
-  font-size: clamp(9px, 1vmin, 11px);
-  font-weight: 700;
-  color: var(--text-muted);
-  text-decoration: none;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border-color);
-  padding: 3px 8px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-
-.left-bar-version-link:hover {
-  color: var(--accent-color);
-  background: rgba(0, 210, 255, 0.12);
-  border-color: var(--accent-color);
-  box-shadow: 0 0 10px var(--border-glow);
-  transform: translateY(-1px);
-}
-
-.left-bar-version-icon {
-  font-size: clamp(10px, 1.1vmin, 12px);
-}
-
 @keyframes liveBlink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.35; }

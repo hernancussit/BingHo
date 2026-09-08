@@ -86,9 +86,7 @@ const DOM = {
   winnerSubtitle: document.getElementById('winnerSubtitle'),
   btnCloseWinner: document.getElementById('btnCloseWinner'),
 
-  // Versión y Créditos (Abajo a la Izquierda, Panel y Footer)
-  leftBarVersionLink: document.getElementById('leftBarVersionLink'),
-  leftBarVersionText: document.getElementById('leftBarVersionText'),
+  // Versión y Créditos (Panel Superior y Footer)
   appVersionBadge: document.getElementById('appVersionBadge'),
   footerVersionText: document.getElementById('footerVersionText'),
 
@@ -1582,7 +1580,7 @@ if (!isProjectorMode) {
     });
   }
 
-  // Enlaces hacia el GitHub del Proyecto (Versión Abajo a la Izquierda, Panel y Footer)
+  // Enlaces hacia el GitHub del Proyecto (Badge de Panel y Footer)
   const githubProjectUrl = 'https://github.com/hernancussit/BingHo';
   const handleOpenGitHub = (e) => {
     if (e) e.preventDefault();
@@ -1593,7 +1591,6 @@ if (!isProjectorMode) {
     }
   };
 
-  if (DOM.leftBarVersionLink) DOM.leftBarVersionLink.addEventListener('click', handleOpenGitHub);
   if (DOM.appVersionBadge) DOM.appVersionBadge.addEventListener('click', handleOpenGitHub);
   if (DOM.footerVersionText) DOM.footerVersionText.addEventListener('click', handleOpenGitHub);
 
@@ -1788,8 +1785,6 @@ window.addEventListener('DOMContentLoaded', () => {
           ? `BingHo ${display} - Pantalla de Proyección` 
           : `BingHo ${display} - Por ${info.author || 'Hernán Cussit'}`;
         document.title = titleStr;
-        if (DOM.leftBarVersionText) DOM.leftBarVersionText.textContent = display;
-        if (DOM.leftBarVersionBadge) DOM.leftBarVersionBadge.textContent = display;
         if (DOM.appVersionBadge) DOM.appVersionBadge.textContent = display;
         if (DOM.footerVersionText) DOM.footerVersionText.textContent = display;
       }
