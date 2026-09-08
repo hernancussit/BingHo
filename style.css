@@ -1034,6 +1034,68 @@ body {
   border-color: #ff4d4f;
 }
 
+/* Selector Desplegable de Sonidos */
+.sound-select-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background-color: var(--bg-main);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.sound-select-wrapper:hover {
+  background-color: var(--bg-card);
+  border-color: var(--accent-color);
+}
+
+.sound-select-wrapper:focus-within {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 10px var(--border-glow);
+}
+
+.sound-select-icon {
+  position: absolute;
+  left: 8px;
+  pointer-events: none;
+  font-size: clamp(10px, 1.2vmin, 13px);
+  z-index: 2;
+  user-select: none;
+}
+
+.sound-select-dropdown {
+  width: 100%;
+  padding: clamp(4px, 0.65vh, 6px) 24px clamp(4px, 0.65vh, 6px) 28px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: clamp(9px, 1.1vmin, 12px);
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%2394a3b8' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 8px 5px;
+}
+
+.sound-select-dropdown option {
+  background-color: #0b132b;
+  color: #ffffff;
+  padding: 6px 10px;
+}
+
+[data-theme="luz-dia"] .sound-select-dropdown option {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+
 .panel-hint-footer {
   text-align: center;
   border-top: 1px solid var(--border-color);

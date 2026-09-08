@@ -202,9 +202,17 @@
           ⛶ <span id="fullscreenText">Pantalla Completa</span>
         </button>
         
-        <button id="btnSoundToggle" class="btn-system" title="Alternar Efectos de Sonido">
-          <span id="soundIcon">🔊</span> <span id="soundText">Sonido: ON</span>
-        </button>
+        <div class="sound-select-wrapper" title="Seleccionar tema de sonido o silenciar">
+          <span class="sound-select-icon" id="soundSelectIcon">🔊</span>
+          <select id="soundPresetSelect" class="sound-select-dropdown" aria-label="Efectos de Sonido">
+            <option value="clasico">🔔 Clásico</option>
+            <option value="arcade">👾 Arcade / 8-Bit</option>
+            <option value="marimba">🪵 Marimba Suave</option>
+            <option value="digital">✨ Digital / Pop</option>
+            <option value="campana">🛎️ Campanilla</option>
+            <option value="silencio">🔇 Sin Sonido</option>
+          </select>
+        </div>
 
         <button id="btnReset" class="btn-system btn-system-danger" title="Reiniciar para un nuevo sorteo">
           🗑 Nuevo Sorteo

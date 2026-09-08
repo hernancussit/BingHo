@@ -21,7 +21,7 @@ const state = {
   drawTitle: 'SORTEO N° 001',
   currentTheme: 'clasico',
   fontScale: 100, // Escala de fuente (60 a 130)
-  soundEnabled: !isProjectorMode,
+  soundPreset: isProjectorMode ? 'silencio' : 'clasico', // 'clasico' | 'arcade' | 'marimba' | 'digital' | 'campana' | 'silencio'
   audioCtx: null
 };
 
@@ -70,9 +70,8 @@ const DOM = {
   updateBtnText: document.getElementById('updateBtnText'),
   btnFullscreen: document.getElementById('btnFullscreen'),
   fullscreenText: document.getElementById('fullscreenText'),
-  btnSoundToggle: document.getElementById('btnSoundToggle'),
-  soundIcon: document.getElementById('soundIcon'),
-  soundText: document.getElementById('soundText'),
+  soundPresetSelect: document.getElementById('soundPresetSelect'),
+  soundSelectIcon: document.getElementById('soundSelectIcon'),
   btnReset: document.getElementById('btnReset'),
   themeButtons: document.querySelectorAll('.btn-theme-chip'),
 
@@ -295,7 +294,7 @@ function saveState() {
       drawTitle: state.drawTitle,
       currentTheme: state.currentTheme,
       fontScale: state.fontScale,
-      soundEnabled: state.soundEnabled
+      soundPreset: state.soundPreset
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   } catch (e) {
@@ -327,9 +326,13 @@ function loadState() {
     } else {
       applyFontScale(100, false);
     }
-    if (typeof parsed.soundEnabled === 'boolean' && !isProjectorMode) {
-      state.soundEnabled = parsed.soundEnabled;
-      updateSoundButtonUI();
+    if (!isProjectorMode) {
+      if (parsed.soundPreset) {
+        state.soundPreset = parsed.soundPreset;
+      } else if (typeof parsed.soundEnabled === 'boolean') {
+        state.soundPreset = parsed.soundEnabled ? 'clasico' : 'silencio';
+      }
+      updateSoundUI();
     }
     return true;
   } catch (e) {
@@ -357,7 +360,7 @@ function applyFontScale(val, shouldBroadcast = true) {
 }
 
 // ==========================================================================
-// 5. SINTETIZADOR DE AUDIO (Web Audio API)
+// 5. SINTETIZADOR DE AUDIO MULTI-PERFIL (Web Audio API)
 // ==========================================================================
 
 function getAudioContext() {
@@ -374,8 +377,12 @@ function getAudioContext() {
   return state.audioCtx;
 }
 
-function playTone(freq, type = 'sine', duration = 0.15, delay = 0) {
-  if (isProjectorMode || !state.soundEnabled) return;
+function isAudioActive() {
+  return !isProjectorMode && state.soundPreset && state.soundPreset !== 'silencio';
+}
+
+function playTone(freq, type = 'sine', duration = 0.15, delay = 0, startGain = 0.2) {
+  if (!isAudioActive()) return;
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
@@ -385,7 +392,7 @@ function playTone(freq, type = 'sine', duration = 0.15, delay = 0) {
       const gain = ctx.createGain();
       osc.type = type;
       osc.frequency.setValueAtTime(freq, ctx.currentTime);
-      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      gain.gain.setValueAtTime(startGain, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
       osc.connect(gain);
       gain.connect(ctx.destination);
@@ -396,50 +403,241 @@ function playTone(freq, type = 'sine', duration = 0.15, delay = 0) {
 }
 
 function playDrawSound() {
-  playTone(523.25, 'triangle', 0.12, 0); // C5
-  playTone(659.25, 'triangle', 0.22, 0.07); // E5
+  if (!isAudioActive()) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const preset = state.soundPreset || 'clasico';
+
+  if (preset === 'arcade') {
+    // 8-bit blip ascendente rápido
+    try {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(350, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.18, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.12);
+    } catch (e) {}
+
+  } else if (preset === 'marimba') {
+    // Golpe de marimba acústica suave
+    playTone(440, 'triangle', 0.18, 0, 0.25);
+    playTone(880, 'sine', 0.12, 0, 0.12);
+
+  } else if (preset === 'digital') {
+    // Pop moderno de frecuencia descendente
+    try {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(950, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(450, ctx.currentTime + 0.09);
+      gain.gain.setValueAtTime(0.24, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.09);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.09);
+    } catch (e) {}
+
+  } else if (preset === 'campana') {
+    // Campanilla cristalina
+    playTone(1046.50, 'sine', 0.35, 0, 0.22);
+    playTone(2093.00, 'sine', 0.20, 0, 0.08);
+
+  } else {
+    // Clásico / Casino (por defecto)
+    playTone(523.25, 'triangle', 0.12, 0, 0.22); // C5
+    playTone(659.25, 'triangle', 0.22, 0.07, 0.22); // E5
+  }
 }
 
 function playAuditValidSound() {
-  playTone(523.25, 'sine', 0.15, 0);
-  playTone(659.25, 'sine', 0.15, 0.08);
-  playTone(783.99, 'sine', 0.25, 0.16);
-  playTone(1046.50, 'sine', 0.35, 0.25);
+  if (!isAudioActive()) return;
+  const preset = state.soundPreset || 'clasico';
+
+  if (preset === 'arcade') {
+    // Arpegio retro power-up
+    playTone(330, 'square', 0.09, 0, 0.15);
+    playTone(440, 'square', 0.09, 0.07, 0.15);
+    playTone(660, 'square', 0.09, 0.14, 0.15);
+    playTone(880, 'square', 0.22, 0.21, 0.18);
+
+  } else if (preset === 'marimba') {
+    // Acorde de marimba suave
+    playTone(392.00, 'triangle', 0.20, 0, 0.22); // G4
+    playTone(523.25, 'triangle', 0.22, 0.07, 0.22); // C5
+    playTone(659.25, 'triangle', 0.25, 0.14, 0.24); // E5
+    playTone(783.99, 'triangle', 0.35, 0.22, 0.26); // G5
+
+  } else if (preset === 'digital') {
+    // Ding-dong digital nítido
+    playTone(784, 'sine', 0.15, 0, 0.22);
+    playTone(1174, 'sine', 0.30, 0.09, 0.25);
+
+  } else if (preset === 'campana') {
+    // Campanadas de cristal ascendentes
+    playTone(783.99, 'sine', 0.25, 0, 0.2);
+    playTone(1046.50, 'sine', 0.30, 0.10, 0.22);
+    playTone(1318.51, 'sine', 0.45, 0.20, 0.25);
+
+  } else {
+    // Clásico
+    playTone(523.25, 'sine', 0.15, 0, 0.2);
+    playTone(659.25, 'sine', 0.15, 0.08, 0.2);
+    playTone(783.99, 'sine', 0.25, 0.16, 0.22);
+    playTone(1046.50, 'sine', 0.35, 0.25, 0.25);
+  }
 }
 
 function playAuditInvalidSound() {
-  playTone(220, 'sawtooth', 0.22, 0);
-  playTone(175, 'sawtooth', 0.3, 0.15);
+  if (!isAudioActive()) return;
+  const preset = state.soundPreset || 'clasico';
+
+  if (preset === 'arcade') {
+    // Buzzer 8-bit game over
+    playTone(140, 'sawtooth', 0.18, 0, 0.2);
+    playTone(110, 'sawtooth', 0.28, 0.12, 0.22);
+
+  } else if (preset === 'marimba') {
+    // Golpe sordo de madera
+    playTone(165, 'triangle', 0.22, 0, 0.25);
+    playTone(130, 'triangle', 0.30, 0.12, 0.22);
+
+  } else if (preset === 'digital') {
+    // Doble reject digital
+    playTone(280, 'square', 0.12, 0, 0.15);
+    playTone(220, 'square', 0.20, 0.10, 0.15);
+
+  } else if (preset === 'campana') {
+    // Tono metálico opaco
+    playTone(240, 'triangle', 0.20, 0, 0.22);
+    playTone(180, 'triangle', 0.25, 0.12, 0.22);
+
+  } else {
+    // Clásico
+    playTone(220, 'sawtooth', 0.22, 0, 0.2);
+    playTone(175, 'sawtooth', 0.3, 0.15, 0.2);
+  }
 }
 
 function playVictoryFanfare() {
-  if (isProjectorMode || !state.soundEnabled) return;
+  if (!isAudioActive()) return;
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
     
-    const notes = [
-      { freq: 523.25, time: 0, dur: 0.14 },    // C5
-      { freq: 659.25, time: 0.11, dur: 0.14 }, // E5
-      { freq: 783.99, time: 0.22, dur: 0.18 }, // G5
-      { freq: 1046.50, time: 0.36, dur: 0.65 } // C6
-    ];
+    const preset = state.soundPreset || 'clasico';
 
-    notes.forEach(n => {
-      setTimeout(() => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(n.freq, ctx.currentTime);
-        gain.gain.setValueAtTime(0.28, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + n.dur);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + n.dur);
-      }, n.time * 1000);
-    });
+    if (preset === 'arcade') {
+      // Fanfarria victoriosa chip-tune 8-bit
+      const notes = [
+        { freq: 523.25, time: 0, dur: 0.10 },
+        { freq: 587.33, time: 0.09, dur: 0.10 },
+        { freq: 659.25, time: 0.18, dur: 0.12 },
+        { freq: 783.99, time: 0.28, dur: 0.14 },
+        { freq: 1046.50, time: 0.42, dur: 0.55 }
+      ];
+      notes.forEach(n => {
+        setTimeout(() => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(n.freq, ctx.currentTime);
+          gain.gain.setValueAtTime(0.20, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + n.dur);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + n.dur);
+        }, n.time * 1000);
+      });
+
+    } else if (preset === 'marimba') {
+      // Cascada festiva de marimba
+      const notes = [
+        { freq: 523.25, time: 0, dur: 0.18 },
+        { freq: 659.25, time: 0.10, dur: 0.20 },
+        { freq: 783.99, time: 0.20, dur: 0.22 },
+        { freq: 987.77, time: 0.30, dur: 0.25 },
+        { freq: 1046.50, time: 0.42, dur: 0.65 }
+      ];
+      notes.forEach(n => {
+        setTimeout(() => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(n.freq, ctx.currentTime);
+          gain.gain.setValueAtTime(0.26, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + n.dur);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + n.dur);
+        }, n.time * 1000);
+      });
+
+    } else if (preset === 'digital' || preset === 'campana') {
+      // Fanfarria brillante cristalina
+      const notes = [
+        { freq: 659.25, time: 0, dur: 0.15 },
+        { freq: 783.99, time: 0.12, dur: 0.16 },
+        { freq: 1046.50, time: 0.24, dur: 0.20 },
+        { freq: 1318.51, time: 0.38, dur: 0.60 }
+      ];
+      notes.forEach(n => {
+        setTimeout(() => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(n.freq, ctx.currentTime);
+          gain.gain.setValueAtTime(0.28, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + n.dur);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + n.dur);
+        }, n.time * 1000);
+      });
+
+    } else {
+      // Fanfarria clásica
+      const notes = [
+        { freq: 523.25, time: 0, dur: 0.14 },    // C5
+        { freq: 659.25, time: 0.11, dur: 0.14 }, // E5
+        { freq: 783.99, time: 0.22, dur: 0.18 }, // G5
+        { freq: 1046.50, time: 0.36, dur: 0.65 } // C6
+      ];
+      notes.forEach(n => {
+        setTimeout(() => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(n.freq, ctx.currentTime);
+          gain.gain.setValueAtTime(0.28, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + n.dur);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + n.dur);
+        }, n.time * 1000);
+      });
+    }
   } catch (e) {}
+}
+
+function updateSoundUI() {
+  if (!DOM.soundPresetSelect) return;
+  DOM.soundPresetSelect.value = state.soundPreset || 'clasico';
+  if (DOM.soundSelectIcon) {
+    DOM.soundSelectIcon.textContent = (state.soundPreset === 'silencio') ? '🔇' : '🔊';
+  }
 }
 
 // ==========================================================================
@@ -1077,9 +1275,7 @@ if (window.electronAPI && window.electronAPI.onFullScreenChange) {
 }
 
 function updateSoundButtonUI() {
-  if (!DOM.soundIcon || !DOM.soundText) return;
-  DOM.soundIcon.textContent = state.soundEnabled ? '🔊' : '🔇';
-  DOM.soundText.textContent = state.soundEnabled ? 'Sonido: ON' : 'Sonido: OFF';
+  updateSoundUI();
 }
 
 // ==========================================================================
@@ -1466,12 +1662,15 @@ if (!isProjectorMode) {
   // Pantalla Completa
   if (DOM.btnFullscreen) DOM.btnFullscreen.addEventListener('click', toggleFullScreen);
 
-  // Sonido
-  if (DOM.btnSoundToggle) {
-    DOM.btnSoundToggle.addEventListener('click', () => {
-      state.soundEnabled = !state.soundEnabled;
-      updateSoundButtonUI();
+  // Selector de Efectos de Sonido
+  if (DOM.soundPresetSelect) {
+    DOM.soundPresetSelect.addEventListener('change', (e) => {
+      state.soundPreset = e.target.value;
+      updateSoundUI();
       saveState();
+      if (state.soundPreset !== 'silencio') {
+        playDrawSound(); // Sonido de muestra inmediato para feedback acústico
+      }
       refocusInput();
     });
   }
