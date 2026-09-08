@@ -23,11 +23,23 @@ $sourceFile = "dist\Launcher.cs"
 $iconPath = "icon.ico"
 $buildId = [Guid]::NewGuid().ToString()
 
-Write-Host ">>> Paso 2: Creando archivo comprimido de la aplicación..." -ForegroundColor Cyan
-if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
-Compress-Archive -Path "$distPath\*" -DestinationPath $zipPath -CompressionLevel Fastest -Force
+Write-Host ">>> Paso 2: Optimizando y limpiando recursos innecesarios del empaquetado..." -ForegroundColor Cyan
+# Limpiar locales sobrantes (conservar es, es-419, en-US, en-GB)
+$localesPath = Join-Path $distPath "locales"
+if (Test-Path $localesPath) {
+    Get-ChildItem -Path $localesPath -Filter "*.pak" | Where-Object {
+        $_.Name -notmatch '^(es|es-419|en-US|en-GB)\.pak$'
+    } | Remove-Item -Force
+}
+# Eliminar archivo de licencias HTML voluminoso
+$licensesHtml = Join-Path $distPath "LICENSES.chromium.html"
+if (Test-Path $licensesHtml) { Remove-Item $licensesHtml -Force }
 
-Write-Host ">>> Paso 3: Generando código del lanzador portable con metadatos completos de Windows (Build ID: $buildId, Ver: $assemblyVer)..." -ForegroundColor Cyan
+Write-Host ">>> Paso 3: Creando archivo comprimido de alta densidad..." -ForegroundColor Cyan
+if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
+Compress-Archive -Path "$distPath\*" -DestinationPath $zipPath -CompressionLevel Optimal -Force
+
+Write-Host ">>> Paso 4: Generando código del lanzador portable con metadatos completos de Windows (Build ID: $buildId, Ver: $assemblyVer)..." -ForegroundColor Cyan
 $csharpCode = @"
 using System;
 using System.Diagnostics;
@@ -163,7 +175,7 @@ namespace BingHo
 
 Set-Content -Path $sourceFile -Value $csharpCode -Encoding UTF8
 
-Write-Host ">>> Paso 4: Compilando ejecutable único portable con icono y AssemblyInfo mediante csc.exe..." -ForegroundColor Cyan
+Write-Host ">>> Paso 5: Compilando ejecutable único portable con icono y AssemblyInfo mediante csc.exe..." -ForegroundColor Cyan
 $cscPath = "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
 $arguments = @(
     "/target:winexe",
